@@ -36,6 +36,12 @@
             <version>${sbb-mcp-commons.version}</version>
         </dependency>
 
+        <!-- Redis for MCP Commons session management -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -129,7 +135,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <from>
-                        <image>eclipse-temurin:21-jre</image>
+                        <image>gcr.io/distroless/java21-debian12</image>
                     </from>
                     <to>
                         <image>gcr.io/PROJECT_ID/open-meteo-mcp</image>
@@ -142,6 +148,7 @@
                         <ports>
                             <port>8080</port>
                         </ports>
+                        <mainClass>com.openmeteo.OpenMeteoMcpApplication</mainClass>
                         <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
                     </container>
                 </configuration>
