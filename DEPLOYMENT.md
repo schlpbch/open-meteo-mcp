@@ -12,7 +12,7 @@
 - ✅ Billing: Enabled (SBB MCP PoC - `015715-49F79A-6A40CC`)
 - ✅ Deployment: Active on Cloud Run
 - ✅ MCP Endpoint: Functional
-- ⚠️ Health Check: Redis not configured (expected)
+- ✅ Health Check: UP (using in-memory session storage)
 
 ### Deployment Configuration
 
@@ -113,17 +113,15 @@ Add to your Claude Desktop configuration:
 
 ## Known Issues
 
-### Redis Connection
+### Test Failures (Java 25 Compatibility)
 
-- **Status**: Health endpoint reports Redis as DOWN
-- **Impact**: None - MCP functionality is fully operational
-- **Resolution Options**:
-  1. Configure Cloud Memorystore for Redis (recommended for production)
-  2. Disable Redis health check for staging
-  3. Accept as-is for staging environment
+- **Issue**: Unit tests fail when run with Java 25 due to Mockito/ByteBuddy compatibility
+- **Error**: `Java 25 (69) is not supported by the current version of Byte Buddy`
+- **Impact**: None - Application compiles and runs correctly with Java 21
+- **Workaround**: Ensure `JAVA_HOME` points to JDK 21 when running tests
 
 ## Next Steps
 
-1. **Optional**: Configure Redis for session management
-2. **Integration Testing**: Test with Claude Desktop or other MCP clients
-3. **Monitoring**: Set up Cloud Monitoring alerts
+1. **Integration Testing**: Test with Claude Desktop or other MCP clients
+2. **Monitoring**: Set up Cloud Monitoring alerts
+3. **Production Deployment**: Deploy to production environment when ready
