@@ -36,12 +36,6 @@
             <version>${sbb-mcp-commons.version}</version>
         </dependency>
 
-        <!-- Redis for MCP Commons session management -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
-        </dependency>
-
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
