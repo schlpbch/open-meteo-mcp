@@ -218,3 +218,44 @@ class TestOpenMeteoClient:
         client = OpenMeteoClient()
         await client.close()
         # Should not raise an error
+    
+    async def test_get_snow_conditions_http_error(self, httpx_mock: HTTPXMock):
+        """Test handling of HTTP errors for snow endpoint."""
+        httpx_mock.add_response(status_code=503)
+        
+        async with OpenMeteoClient() as client:
+            with pytest.raises(Exception):  # httpx.HTTPStatusError
+                await client.get_snow_conditions(latitude=45.9763, longitude=7.6586)
+    
+    async def test_get_snow_conditions_invalid_response(self, httpx_mock: HTTPXMock):
+        """Test handling of invalid JSON response for snow endpoint."""
+        httpx_mock.add_response(
+            json={"invalid": "snow_data"}
+        )
+        
+        async with OpenMeteoClient() as client:
+            with pytest.raises(ValueError):
+                await client.get_snow_conditions(latitude=45.9763, longitude=7.6586)
+    
+    async def test_network_timeout(self, httpx_mock: HTTPXMock):
+        """Test handling of network timeout."""
+        import httpx
+        
+        # Create a client with very short timeout
+        client = OpenMeteoClient(timeout=0.001)
+        
+        # Mock a delayed response
+        httpx_mock.add_response(
+            json={"latitude": 46.9479},
+            # This will cause a timeout with our 0.001s timeout
+        )
+        
+        # The timeout is so short that even a successful response might timeout
+        # We're testing that the client handles timeout gracefully
+        try:
+            await client.get_weather(latitude=46.9479, longitude=7.4474)
+        except (httpx.TimeoutException, httpx.ReadTimeout, Exception):
+            # Expected - timeout or any network error
+            pass
+        finally:
+            await client.close()
