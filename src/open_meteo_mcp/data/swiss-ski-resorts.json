@@ -1,0 +1,154 @@
+{
+  "resorts": [
+    {
+      "name": "Zermatt",
+      "region": "Valais",
+      "latitude": 45.9763,
+      "longitude": 7.6586,
+      "elevation": 1620,
+      "description": "Car-free alpine resort at the foot of the Matterhorn",
+      "skiArea": "Matterhorn Glacier Paradise"
+    },
+    {
+      "name": "Verbier",
+      "region": "Valais",
+      "latitude": 46.0964,
+      "longitude": 7.2283,
+      "elevation": 1500,
+      "description": "Premier resort in the Four Valleys ski area",
+      "skiArea": "4 Vallées"
+    },
+    {
+      "name": "St. Moritz",
+      "region": "Graubünden",
+      "latitude": 46.4908,
+      "longitude": 9.8355,
+      "elevation": 1856,
+      "description": "Luxury alpine resort, hosted Winter Olympics twice",
+      "skiArea": "Corviglia-Corvatsch"
+    },
+    {
+      "name": "Davos",
+      "region": "Graubünden",
+      "latitude": 46.8029,
+      "longitude": 9.8366,
+      "elevation": 1560,
+      "description": "Largest resort in Switzerland, home to World Economic Forum",
+      "skiArea": "Davos Klosters"
+    },
+    {
+      "name": "Grindelwald",
+      "region": "Bern",
+      "latitude": 46.6244,
+      "longitude": 8.0411,
+      "elevation": 1034,
+      "description": "Iconic resort beneath the Eiger North Face",
+      "skiArea": "Jungfrau Region"
+    },
+    {
+      "name": "Saas-Fee",
+      "region": "Valais",
+      "latitude": 45.9333,
+      "longitude": 7.9167,
+      "elevation": 1800,
+      "description": "Car-free glacier village, year-round skiing",
+      "skiArea": "Saas-Fee/Saastal"
+    },
+    {
+      "name": "Laax",
+      "region": "Graubünden",
+      "latitude": 46.8139,
+      "longitude": 9.2628,
+      "elevation": 1100,
+      "description": "Freestyle paradise with excellent snowparks",
+      "skiArea": "Flims Laax Falera"
+    },
+    {
+      "name": "Engelberg",
+      "region": "Obwalden",
+      "latitude": 46.8186,
+      "longitude": 8.4094,
+      "elevation": 1050,
+      "description": "Central Switzerland resort with glacier skiing",
+      "skiArea": "Titlis"
+    },
+    {
+      "name": "Andermatt",
+      "region": "Uri",
+      "latitude": 46.6333,
+      "longitude": 8.5944,
+      "elevation": 1444,
+      "description": "Historic alpine village with modern ski area",
+      "skiArea": "SkiArena Andermatt-Sedrun"
+    },
+    {
+      "name": "Wengen",
+      "region": "Bern",
+      "latitude": 46.6058,
+      "longitude": 7.9225,
+      "elevation": 1274,
+      "description": "Car-free resort, home to Lauberhorn downhill race",
+      "skiArea": "Jungfrau Region"
+    },
+    {
+      "name": "Arosa",
+      "region": "Graubünden",
+      "latitude": 46.7833,
+      "longitude": 9.6833,
+      "elevation": 1775,
+      "description": "Family-friendly resort with sunny slopes",
+      "skiArea": "Arosa Lenzerheide"
+    },
+    {
+      "name": "Crans-Montana",
+      "region": "Valais",
+      "latitude": 46.3167,
+      "longitude": 7.4833,
+      "elevation": 1500,
+      "description": "Sunny plateau resort with panoramic views",
+      "skiArea": "Crans-Montana"
+    },
+    {
+      "name": "Klosters",
+      "region": "Graubünden",
+      "latitude": 46.8833,
+      "longitude": 9.8833,
+      "elevation": 1191,
+      "description": "Traditional village linked to Davos ski area",
+      "skiArea": "Davos Klosters"
+    },
+    {
+      "name": "Lenzerheide",
+      "region": "Graubünden",
+      "latitude": 46.7167,
+      "longitude": 9.55,
+      "elevation": 1476,
+      "description": "Modern resort connected to Arosa",
+      "skiArea": "Arosa Lenzerheide"
+    },
+    {
+      "name": "Adelboden",
+      "region": "Bern",
+      "latitude": 46.4917,
+      "longitude": 7.5597,
+      "elevation": 1350,
+      "description": "Traditional Bernese Oberland resort",
+      "skiArea": "Adelboden-Lenk"
+    },
+    {
+      "name": "Gstaad",
+      "region": "Bern",
+      "latitude": 46.475,
+      "longitude": 7.2861,
+      "elevation": 1050,
+      "description": "Exclusive resort with luxury chalets",
+      "skiArea": "Gstaad Mountain Rides"
+    }
+  ],
+  "metadata": {
+    "totalResorts": 16,
+    "regions": ["Valais", "Graubünden", "Bern", "Obwalden", "Uri"],
+    "source": "Swiss Tourism and ski area data",
+    "lastUpdated": "2026-01-06"
+  }
+}
