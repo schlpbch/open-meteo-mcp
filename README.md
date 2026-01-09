@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server providing weather and snow condition tools via the [Open-Meteo API](https://open-meteo.com/).
 
+**Version 2.0** - Now powered by Python and FastMCP!
+
 ## Features
 
 - **Weather Forecasts**: Get current weather and multi-day forecasts for any location
@@ -13,7 +15,7 @@ A Model Context Protocol (MCP) server providing weather and snow condition tools
 
 ## Tools
 
-### `getWeather`
+### `get_weather`
 
 Get weather forecast for a location with temperature, precipitation, humidity, and more.
 
@@ -21,11 +23,11 @@ Get weather forecast for a location with temperature, precipitation, humidity, a
 
 - `latitude` (required): Latitude in decimal degrees
 - `longitude` (required): Longitude in decimal degrees
-- `forecastDays` (optional): Number of forecast days (1-16, default: 7)
-- `includeHourly` (optional): Include hourly forecasts (default: true)
+- `forecast_days` (optional): Number of forecast days (1-16, default: 7)
+- `include_hourly` (optional): Include hourly forecasts (default: true)
 - `timezone` (optional): Timezone for timestamps (default: "auto")
 
-### `getSnowConditions`
+### `get_snow_conditions`
 
 Get snow conditions and forecasts for mountain locations.
 
@@ -33,8 +35,8 @@ Get snow conditions and forecasts for mountain locations.
 
 - `latitude` (required): Latitude in decimal degrees
 - `longitude` (required): Longitude in decimal degrees
-- `forecastDays` (optional): Number of forecast days (1-16, default: 7)
-- `includeHourly` (optional): Include hourly data (default: true)
+- `forecast_days` (optional): Number of forecast days (1-16, default: 7)
+- `include_hourly` (optional): Include hourly data (default: true)
 - `timezone` (optional): Timezone for timestamps (default: "Europe/Zurich")
 
 ## Resources
@@ -92,43 +94,54 @@ Integration pattern for combining weather with journey planning.
 
 ## Technology Stack
 
-- **Java 21** (LTS)
-- **Spring Boot 3.4.1**
-- **Spring WebFlux** (Reactive)
-- **SBB MCP Commons 1.8.0**
-- **Maven**
+- **Python 3.11+**
+- **FastMCP** - MCP server framework
+- **httpx** - Async HTTP client
+- **Pydantic** - Data validation
+- **structlog** - Structured logging
+- **uv** - Fast Python package manager
 
 ## Prerequisites
 
-- Java 21 or higher
-- Maven 3.6+
+- Python 3.11 or higher
+- uv package manager
 
-## Building
+## Installation
+
+### Install uv (if not already installed)
+
+**Windows (PowerShell):**
+
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**macOS/Linux:**
 
 ```bash
-mvn clean install
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+### Install Dependencies
+
+```bash
+uv sync
+```
+
+This will install all required dependencies including FastMCP, httpx, pydantic, and testing tools.
 
 ## Running Locally
 
+### Stdio Mode (for Claude Desktop)
+
 ```bash
-mvn spring-boot:run
+uv run python -m open_meteo_mcp.server
 ```
 
-The server will start on `http://localhost:8080`.
-
-## Docker
-
-Build the container:
+### Testing with MCP Inspector
 
 ```bash
-mvn compile jib:dockerBuild
-```
-
-Run the container:
-
-```bash
-docker run -p 8080:8080 gcr.io/PROJECT_ID/open-meteo-mcp
+npx @modelcontextprotocol/inspector uv run python -m open_meteo_mcp.server
 ```
 
 ## MCP Integration
@@ -144,22 +157,79 @@ Add to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "open-meteo": {
-      "command": "java",
+      "command": "uv",
       "args": [
-        "-jar",
-        "/path/to/open-meteo-mcp-1.0.0.jar"
+        "--directory",
+        "C:\\Users\\YourUsername\\path\\to\\open-meteo-mcp",
+        "run",
+        "python",
+        "-m",
+        "open_meteo_mcp.server"
       ]
     }
   }
 }
 ```
 
-## API Documentation
+**Note**: Update the `--directory` path to match your local installation.
 
-The server exposes standard MCP endpoints:
+## Development
 
-- `POST /mcp` - Main MCP endpoint for tool execution
-- `GET /health` - Health check endpoint
+### Running Tests
+
+```bash
+# Run all tests
+uv run pytest tests/ -v
+
+# Run with coverage
+uv run pytest tests/ --cov=open_meteo_mcp --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_models.py -v
+```
+
+### Project Structure
+
+```
+open-meteo-mcp/
+├── src/
+│   └── open_meteo_mcp/
+│       ├── __init__.py
+│       ├── server.py          # FastMCP server with tools, resources, prompts
+│       ├── client.py           # Open-Meteo API client
+│       ├── models.py           # Pydantic models
+│       ├── helpers.py          # Utility functions
+│       └── data/               # JSON resource files
+│           ├── weather-codes.json
+│           ├── swiss-ski-resorts.json
+│           └── weather-parameters.json
+├── tests/
+│   ├── test_models.py
+│   ├── test_client.py
+│   └── test_helpers.py
+├── pyproject.toml              # Project configuration
+└── .fastmcp/
+    └── config.yaml             # FastMCP Cloud deployment config
+```
+
+## Deployment
+
+### FastMCP Cloud
+
+Deploy to FastMCP Cloud for remote access:
+
+```bash
+# Login to FastMCP Cloud
+fastmcp login
+
+# Deploy the server
+fastmcp deploy
+
+# Check deployment status
+fastmcp status open-meteo-mcp
+```
+
+The server will be available at `https://open-meteo-mcp.fastmcp.cloud`
 
 ## Example Usage
 
@@ -188,6 +258,17 @@ Once connected via MCP, you can ask:
 ## Weather Codes
 
 The API returns WMO weather codes. See [docs/WEATHER_CODES.md](docs/WEATHER_CODES.md) for the complete reference.
+
+## Migration from Java
+
+This is version 2.0 of the Open Meteo MCP server, migrated from Java/Spring Boot to Python/FastMCP for:
+
+- Faster development and iteration
+- Easier deployment with FastMCP Cloud
+- Better integration with the MCP ecosystem
+- Simpler codebase and dependencies
+
+The Java version (v1.x) is archived in the `java-v1` branch.
 
 ## License
 

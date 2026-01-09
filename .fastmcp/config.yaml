@@ -1,0 +1,25 @@
+name: open-meteo-mcp
+version: 2.0.0
+description: Weather and snow conditions via Open-Meteo API
+
+runtime:
+  python: '3.11'
+
+transport:
+  - stdio
+  - http
+
+env:
+  LOG_LEVEL: INFO
+
+resources:
+  memory: 512Mi
+  cpu: 0.5
+
+scaling:
+  min_instances: 0
+  max_instances: 10
+
+health_check:
+  path: /health
+  interval: 30s
