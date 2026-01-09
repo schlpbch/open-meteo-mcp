@@ -6,6 +6,7 @@ ch\sbb\ki\openmeteomcp\api\openmeteo\OpenMeteoClient.class
 ch\sbb\ki\openmeteomcp\api\openmeteo\models\HourlySnow.class
 com\openmeteo\resources\WeatherParametersResource.class
 com\openmeteo\api\client\models\HourlySnow.class
+com\openmeteo\session\SseSessionManager.class
 com\openmeteo\api\client\models\DailySnow.class
 com\openmeteo\config\WebClientConfig.class
 ch\sbb\ki\openmeteomcp\api\openmeteo\models\HourlyWeather.class

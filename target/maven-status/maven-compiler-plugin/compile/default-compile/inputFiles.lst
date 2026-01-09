@@ -25,6 +25,7 @@ C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\prompts\WeatherAw
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\resources\SwissSkiResortsResource.java
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\resources\WeatherCodesResource.java
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\resources\WeatherParametersResource.java
+C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\session\SseSessionManager.java
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\tools\GetSnowConditionsTool.java
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\tools\GetWeatherTool.java
 C:\Users\schlp\code\open-meteo-mcp\src\main\java\com\openmeteo\tools\models\SnowInput.java
