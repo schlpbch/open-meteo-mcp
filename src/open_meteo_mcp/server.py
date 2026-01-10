@@ -126,6 +126,115 @@ async def get_snow_conditions(
     return conditions.model_dump()
 
 
+@mcp.tool()
+async def search_location(
+    name: str,
+    count: int = 10,
+    language: str = "en",
+    country: str = ""
+) -> dict:
+    """
+    Search for locations by name to get coordinates for weather queries.
+    
+    Convert location names to coordinates using fuzzy search. Essential for
+    natural language weather queries like "weather in Zurich" instead of
+    requiring latitude/longitude coordinates.
+    
+    **Examples**:
+    - "Zurich" → Returns Zurich, Switzerland with coordinates
+    - "Bern" → Returns multiple matches (Bern CH, Bern US, etc.)
+    - "Zermatt" → Returns ski resort with elevation data
+    - "Lake Geneva" → Returns lake coordinates
+    
+    **Features**:
+    - Fuzzy matching (handles typos)
+    - Multi-language support
+    - Country filtering (e.g., country="CH" for Switzerland only)
+    - Returns population, timezone, elevation
+    
+    **Workflow**:
+    1. Search for location by name
+    2. Select result (usually first is best match)
+    3. Use latitude/longitude for get_weather or get_snow_conditions
+    
+    **Use this tool when**:
+    - User provides location name instead of coordinates
+    - Need to find coordinates for a city, mountain, or landmark
+    - Want to discover locations in a specific country
+    
+    Args:
+        name: Location name to search (e.g., 'Zurich', 'Eiger', 'Lake Lucerne')
+        count: Number of results to return (1-100, default: 10)
+        language: Language for results (default: 'en', options: 'de', 'fr', 'it', etc.)
+        country: Optional country code filter (e.g., 'CH' for Switzerland, 'DE' for Germany)
+    
+    Returns:
+        List of matching locations with coordinates, elevation, country, timezone
+    """
+    response = await client.search_location(
+        name=name,
+        count=count,
+        language=language,
+        country=country if country else None
+    )
+    return response.model_dump()
+
+
+@mcp.tool()
+async def get_air_quality(
+    latitude: float,
+    longitude: float,
+    forecast_days: int = 5,
+    include_pollen: bool = True
+) -> dict:
+    """
+    Get air quality forecast including AQI, pollutants, UV index, and pollen data.
+    
+    Monitor air quality for health-aware outdoor planning, allergy management,
+    and UV exposure assessment. Provides both European and US Air Quality Indices
+    along with detailed pollutant measurements.
+    
+    **Examples**:
+    - "What's the air quality in Zurich?" → AQI, PM2.5, PM10, ozone levels
+    - "Pollen forecast for Bern?" → Grass, birch, alder pollen counts
+    - "UV index for tomorrow?" → UV radiation forecast
+    
+    **Provides**:
+    - European AQI (0-100+) and US AQI (0-500)
+    - Particulate matter (PM10, PM2.5)
+    - Gases (O3, NO2, SO2, CO, NH3)
+    - UV index (current and clear sky)
+    - Pollen data (Europe only): alder, birch, grass, mugwort, olive, ragweed
+    
+    **Health Guidelines**:
+    - European AQI: 0-20 (Good), 20-40 (Fair), 40-60 (Moderate), 60-80 (Poor), 80-100 (Very Poor), 100+ (Extremely Poor)
+    - US AQI: 0-50 (Good), 51-100 (Moderate), 101-150 (Unhealthy for Sensitive), 151-200 (Unhealthy), 201-300 (Very Unhealthy), 301-500 (Hazardous)
+    - UV Index: 0-2 (Low), 3-5 (Moderate), 6-7 (High), 8-10 (Very High), 11+ (Extreme)
+    
+    **Use this tool when**:
+    - Planning outdoor activities for people with asthma/allergies
+    - Assessing air quality for exercise or sports
+    - Checking pollen levels during allergy season
+    - Monitoring UV exposure for sun safety
+    
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        forecast_days: Number of forecast days (1-5, default: 5)
+        include_pollen: Include pollen data (default: true, Europe only)
+    
+    Returns:
+        Air quality forecast with AQI, pollutants, UV index, and pollen data
+    """
+    forecast = await client.get_air_quality(
+        latitude=latitude,
+        longitude=longitude,
+        forecast_days=forecast_days,
+        include_pollen=include_pollen
+    )
+    return forecast.model_dump()
+
+
 # ============================================================================
 # RESOURCES
 # ============================================================================
@@ -177,6 +286,48 @@ async def weather_parameters() -> str:
     Use this to understand what data is available from the API.
     """
     data_path = Path(__file__).parent / "data" / "weather-parameters.json"
+    return data_path.read_text(encoding="utf-8")
+
+
+@mcp.resource("weather://swiss-locations")
+async def swiss_locations() -> str:
+    """
+    Popular Swiss locations with coordinates (cities, mountains, passes, lakes).
+    
+    Quick reference for common Swiss destinations including:
+    - Major cities: Zurich, Geneva, Bern, Basel, Lausanne, Lucerne, etc.
+    - Mountains: Matterhorn, Eiger, Jungfrau, Pilatus, Rigi
+    - Mountain passes: Gotthard, Simplon, Furka, Grimsel
+    - Lakes: Geneva, Zurich, Lucerne, Constance, Maggiore
+    
+    Each location includes coordinates, elevation, and description.
+    Use this for quick lookups or combine with search_location tool for more options.
+    """
+    data_path = Path(__file__).parent / "data" / "swiss-locations.json"
+    return data_path.read_text(encoding="utf-8")
+
+
+@mcp.resource("weather://aqi-reference")
+async def aqi_reference() -> str:
+    """
+    Air Quality Index (AQI) interpretation guide and health recommendations.
+    
+    Comprehensive reference for understanding air quality measurements:
+    - European AQI scale (0-100+) with 6 levels from Good to Extremely Poor
+    - US AQI scale (0-500) with 6 levels from Good to Hazardous
+    - UV Index scale (0-11+) with protection recommendations
+    - Pollen concentration levels (Europe only)
+    
+    Each level includes:
+    - Numeric range
+    - Color coding
+    - Health implications
+    - Cautionary statements for sensitive groups
+    - Recommended actions
+    
+    Use this to interpret air quality data from get_air_quality tool.
+    """
+    data_path = Path(__file__).parent / "data" / "aqi-reference.json"
     return data_path.read_text(encoding="utf-8")
 
 

@@ -6,14 +6,29 @@ A Model Context Protocol (MCP) server providing weather and snow condition tools
 
 ## Features
 
+- **Geocoding**: Search locations by name instead of coordinates
 - **Weather Forecasts**: Get current weather and multi-day forecasts for any location
 - **Snow Conditions**: Get snow depth, snowfall, and mountain weather data
-- **MCP Resources**: Weather codes, ski resort coordinates, API parameters reference
+- **Air Quality**: Monitor AQI, pollutants, UV index, and pollen levels
+- **MCP Resources**: Weather codes, ski resort coordinates, AQI reference, Swiss locations
 - **MCP Prompts**: Guided workflows for ski trips, outdoor activities, and travel planning
 - **Free API**: No API key required - powered by Open-Meteo's free weather API
 - **MCP Integration**: Seamlessly integrates with MCP-compatible clients like Claude Desktop
 
 ## Tools
+
+### `search_location`
+
+Search for locations by name to get coordinates (NEW in v2.1).
+
+**Parameters:**
+
+- `name` (required): Location name to search
+- `count` (optional): Number of results (1-100, default: 10)
+- `language` (optional): Language for results (default: "en")
+- `country` (optional): Country code filter (e.g., "CH" for Switzerland)
+
+**Example**: `search_location(name="Zurich")` → Returns coordinates, elevation, timezone
 
 ### `get_weather`
 
@@ -27,6 +42,8 @@ Get weather forecast for a location with temperature, precipitation, humidity, a
 - `include_hourly` (optional): Include hourly forecasts (default: true)
 - `timezone` (optional): Timezone for timestamps (default: "auto")
 
+**Enhanced in v2.1**: Now includes precipitation probability, apparent temperature, UV index, cloud cover, visibility, wind gusts
+
 ### `get_snow_conditions`
 
 Get snow conditions and forecasts for mountain locations.
@@ -38,6 +55,21 @@ Get snow conditions and forecasts for mountain locations.
 - `forecast_days` (optional): Number of forecast days (1-16, default: 7)
 - `include_hourly` (optional): Include hourly data (default: true)
 - `timezone` (optional): Timezone for timestamps (default: "Europe/Zurich")
+
+**Enhanced in v2.1**: Now includes wind chill, cloud cover, precipitation probability
+
+### `get_air_quality`
+
+Get air quality forecast including AQI, pollutants, UV index, and pollen (NEW in v2.1).
+
+**Parameters:**
+
+- `latitude` (required): Latitude in decimal degrees
+- `longitude` (required): Longitude in decimal degrees
+- `forecast_days` (optional): Number of forecast days (1-5, default: 5)
+- `include_pollen` (optional): Include pollen data (default: true, Europe only)
+
+**Returns**: European/US AQI, PM10, PM2.5, O3, NO2, SO2, CO, UV index, pollen counts
 
 ## Resources
 
@@ -58,6 +90,22 @@ Popular Swiss ski resort coordinates and metadata.
 - **URI**: `weather://swiss-ski-resorts`
 - **Format**: JSON
 - **Content**: 16 major resorts (Zermatt, Verbier, St. Moritz, etc.)
+
+### `swiss-locations`
+
+Popular Swiss locations with coordinates (NEW in v2.1).
+
+- **URI**: `weather://swiss-locations`
+- **Format**: JSON
+- **Content**: Cities, mountains, passes, and lakes
+
+### `aqi-reference`
+
+Air Quality Index interpretation guide (NEW in v2.1).
+
+- **URI**: `weather://aqi-reference`
+- **Format**: JSON
+- **Content**: European/US AQI scales, UV index, pollen levels, health recommendations
 
 ### `weather-parameters`
 
@@ -235,15 +283,30 @@ The server will be available at `https://open-meteo-mcp.fastmcp.cloud`
 
 Once connected via MCP, you can ask:
 
+**Geocoding** (NEW):
+
+- "Find coordinates for Zurich"
+- "Where is the Matterhorn?"
+- "Search for Interlaken"
+
 **Weather Queries**:
 
 - "What's the weather in Bern, Switzerland?"
 - "Show me the 7-day forecast for Zurich"
+- "What's the UV index tomorrow?"
+- "Chance of rain this weekend?"
+
+**Air Quality** (NEW):
+
+- "What's the air quality in Zurich?"
+- "Pollen forecast for Bern?"
+- "Is it safe to exercise outdoors today?"
 
 **Snow Conditions**:
 
 - "What are the snow conditions in Zermatt?"
 - "Will it snow in the Alps this week?"
+- "Wind conditions at Verbier?"
 
 **Ski Trip Planning** (uses prompts + resources):
 
@@ -254,6 +317,7 @@ Once connected via MCP, you can ask:
 
 - "I want to hike the Eiger Trail next week, what's the weather?"
 - "Best days for cycling around Lake Geneva this week?"
+- "Can I go hiking tomorrow? I have allergies" (checks weather + pollen)
 
 ## Weather Codes
 
