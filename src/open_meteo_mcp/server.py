@@ -19,7 +19,7 @@ client = OpenMeteoClient()
 # TOOLS
 # ============================================================================
 
-@mcp.tool()
+@mcp.tool(name="meteo__get_weather")
 async def get_weather(
     latitude: float,
     longitude: float,
@@ -28,7 +28,7 @@ async def get_weather(
     timezone: str = "auto"
 ) -> dict:
     """
-    Get weather forecast for a location (temperature, rain, sunshine).
+    Retrieves weather forecast for a location (temperature, rain, sunshine).
     
     Get current weather conditions for any location in Switzerland (or worldwide).
     
@@ -63,7 +63,11 @@ async def get_weather(
         timezone: Timezone for timestamps (e.g., 'Europe/Zurich', default: 'auto')
     
     Returns:
-        Weather forecast data with current conditions, hourly and daily forecasts
+        Dictionary containing:
+        - current (dict): Current weather with temperature, weather_code, wind_speed, humidity
+        - hourly (list[dict] | None): Hourly forecasts if include_hourly=True
+        - daily (list[dict]): Daily forecasts with min/max temps, precipitation, weather codes
+        - location (dict): Location metadata with coordinates and timezone
     """
     forecast = await client.get_weather(
         latitude=latitude,
@@ -75,7 +79,7 @@ async def get_weather(
     return forecast.model_dump()
 
 
-@mcp.tool()
+@mcp.tool(name="meteo__get_snow_conditions")
 async def get_snow_conditions(
     latitude: float,
     longitude: float,
@@ -84,7 +88,7 @@ async def get_snow_conditions(
     timezone: str = "Europe/Zurich"
 ) -> dict:
     """
-    Get snow conditions and forecasts for mountain locations.
+    Retrieves snow conditions and forecasts for mountain locations.
     
     **Parameters**:
     - latitude (required): Latitude in decimal degrees
@@ -114,7 +118,11 @@ async def get_snow_conditions(
         timezone: Timezone for timestamps (default: 'Europe/Zurich')
     
     Returns:
-        Snow conditions with depth, snowfall, and temperature data
+        Dictionary containing:
+        - current (dict): Current snow depth and recent snowfall
+        - hourly (list[dict] | None): Hourly snow data if include_hourly=True
+        - daily (list[dict]): Daily snow forecasts with accumulation and temperature
+        - location (dict): Mountain location metadata
     """
     conditions = await client.get_snow_conditions(
         latitude=latitude,
@@ -126,7 +134,7 @@ async def get_snow_conditions(
     return conditions.model_dump()
 
 
-@mcp.tool()
+@mcp.tool(name="meteo__search_location")
 async def search_location(
     name: str,
     count: int = 10,
@@ -134,7 +142,7 @@ async def search_location(
     country: str = ""
 ) -> dict:
     """
-    Search for locations by name to get coordinates for weather queries.
+    Searches for locations by name to get coordinates for weather queries.
     
     Convert location names to coordinates using fuzzy search. Essential for
     natural language weather queries like "weather in Zurich" instead of
@@ -169,7 +177,15 @@ async def search_location(
         country: Optional country code filter (e.g., 'CH' for Switzerland, 'DE' for Germany)
     
     Returns:
-        List of matching locations with coordinates, elevation, country, timezone
+        Dictionary containing:
+        - results (list[dict]): List of matching locations, each with:
+          - name (str): Location name
+          - latitude (float): Latitude coordinate
+          - longitude (float): Longitude coordinate
+          - elevation (float | None): Elevation in meters
+          - country (str): Country code
+          - timezone (str): Timezone identifier
+          - population (int | None): Population if applicable
     """
     response = await client.search_location(
         name=name,
@@ -180,7 +196,7 @@ async def search_location(
     return response.model_dump()
 
 
-@mcp.tool()
+@mcp.tool(name="meteo__get_air_quality")
 async def get_air_quality(
     latitude: float,
     longitude: float,
@@ -188,7 +204,7 @@ async def get_air_quality(
     include_pollen: bool = True
 ) -> dict:
     """
-    Get air quality forecast including AQI, pollutants, UV index, and pollen data.
+    Retrieves air quality forecast including AQI, pollutants, UV index, and pollen data.
     
     Monitor air quality for health-aware outdoor planning, allergy management,
     and UV exposure assessment. Provides both European and US Air Quality Indices
@@ -224,7 +240,11 @@ async def get_air_quality(
         include_pollen: Include pollen data (default: true, Europe only)
     
     Returns:
-        Air quality forecast with AQI, pollutants, UV index, and pollen data
+        Dictionary containing:
+        - current (dict): Current AQI, pollutants (PM10, PM2.5, O3, NO2, SO2, CO), UV index
+        - hourly (list[dict]): Hourly air quality forecasts
+        - pollen (dict | None): Pollen data if include_pollen=True and location is in Europe
+        - location (dict): Location metadata
     """
     forecast = await client.get_air_quality(
         latitude=latitude,
@@ -242,7 +262,7 @@ async def get_air_quality(
 @mcp.resource("weather://codes")
 async def weather_codes() -> str:
     """
-    WMO weather code reference with descriptions, categories, and travel impact.
+    Provides WMO weather code reference with descriptions, categories, and travel impact.
     
     Use this to interpret weather_code values returned by weather tools.
     Contains 28 weather codes with:
@@ -250,6 +270,10 @@ async def weather_codes() -> str:
     - Category (Clear, Cloudy, Rain, Snow, Fog, Thunderstorm)
     - Icon suggestions
     - Travel impact assessments
+    
+    Returns:
+        JSON string with complete weather code reference data including
+        descriptions, categories, and impact assessments for all 28 WMO codes.
     """
     data_path = Path(__file__).parent / "data" / "weather-codes.json"
     return data_path.read_text(encoding="utf-8")
@@ -258,7 +282,7 @@ async def weather_codes() -> str:
 @mcp.resource("weather://swiss-ski-resorts")
 async def swiss_ski_resorts() -> str:
     """
-    Popular Swiss ski resort coordinates and metadata.
+    Provides popular Swiss ski resort coordinates and metadata.
     
     Contains 16 major Swiss ski resorts including:
     - Zermatt, Verbier, St. Moritz, Davos, Grindelwald
@@ -267,6 +291,10 @@ async def swiss_ski_resorts() -> str:
     - Ski area names
     
     Use this resource to get accurate coordinates for ski resorts.
+    
+    Returns:
+        JSON string with ski resort data including names, coordinates,
+        elevations, and ski area information for 16 major Swiss resorts.
     """
     data_path = Path(__file__).parent / "data" / "swiss-ski-resorts.json"
     return data_path.read_text(encoding="utf-8")
@@ -275,7 +303,7 @@ async def swiss_ski_resorts() -> str:
 @mcp.resource("weather://parameters")
 async def weather_parameters() -> str:
     """
-    Available weather and snow parameters from Open-Meteo API.
+    Provides available weather and snow parameters from Open-Meteo API.
     
     Documents all available parameters for:
     - Hourly weather data
@@ -284,6 +312,10 @@ async def weather_parameters() -> str:
     - Units and descriptions
     
     Use this to understand what data is available from the API.
+    
+    Returns:
+        JSON string documenting all available weather and snow parameters,
+        their units, and descriptions for API queries.
     """
     data_path = Path(__file__).parent / "data" / "weather-parameters.json"
     return data_path.read_text(encoding="utf-8")
@@ -292,7 +324,7 @@ async def weather_parameters() -> str:
 @mcp.resource("weather://swiss-locations")
 async def swiss_locations() -> str:
     """
-    Popular Swiss locations with coordinates (cities, mountains, passes, lakes).
+    Provides popular Swiss locations with coordinates (cities, mountains, passes, lakes).
     
     Quick reference for common Swiss destinations including:
     - Major cities: Zurich, Geneva, Bern, Basel, Lausanne, Lucerne, etc.
@@ -302,6 +334,10 @@ async def swiss_locations() -> str:
     
     Each location includes coordinates, elevation, and description.
     Use this for quick lookups or combine with search_location tool for more options.
+    
+    Returns:
+        JSON string with Swiss location data including coordinates, elevations,
+        and descriptions for cities, mountains, passes, and lakes.
     """
     data_path = Path(__file__).parent / "data" / "swiss-locations.json"
     return data_path.read_text(encoding="utf-8")
@@ -310,7 +346,7 @@ async def swiss_locations() -> str:
 @mcp.resource("weather://aqi-reference")
 async def aqi_reference() -> str:
     """
-    Air Quality Index (AQI) interpretation guide and health recommendations.
+    Provides Air Quality Index (AQI) interpretation guide and health recommendations.
     
     Comprehensive reference for understanding air quality measurements:
     - European AQI scale (0-100+) with 6 levels from Good to Extremely Poor
@@ -326,6 +362,10 @@ async def aqi_reference() -> str:
     - Recommended actions
     
     Use this to interpret air quality data from get_air_quality tool.
+    
+    Returns:
+        JSON string with complete AQI reference including European AQI, US AQI,
+        UV Index scales, and health recommendations for each level.
     """
     data_path = Path(__file__).parent / "data" / "aqi-reference.json"
     return data_path.read_text(encoding="utf-8")
@@ -335,14 +375,19 @@ async def aqi_reference() -> str:
 # PROMPTS
 # ============================================================================
 
-@mcp.prompt()
+@mcp.prompt(name="meteo__ski-trip-weather")
 async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
     """
-    Guide for checking snow conditions and weather for ski trips to Swiss resorts.
+    Generates a guide for checking snow conditions and weather for ski trips to Swiss resorts.
     
     Args:
         resort: Name of the Swiss ski resort (e.g., 'Zermatt', 'Verbier', 'St. Moritz')
         dates: Specific dates or time period (e.g., 'this weekend', 'next week', 'January 10-15')
+    
+    Returns:
+        Prompt template string instructing the LLM to check snow conditions,
+        assess ski suitability, and provide recommendations for the specified
+        resort and dates.
     """
     template = f"""You are helping plan a ski trip to Swiss Alps resorts. Follow this workflow:
 
@@ -391,19 +436,24 @@ async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
     return template
 
 
-@mcp.prompt()
+@mcp.prompt(name="meteo__plan-outdoor-activity")
 async def plan_outdoor_activity(
     activity: str = "",
     location: str = "",
     timeframe: str = ""
 ) -> str:
     """
-    Weather-aware outdoor activity planning workflow for hiking, cycling, and other outdoor pursuits.
+    Generates a weather-aware outdoor activity planning workflow for hiking, cycling, and other outdoor pursuits.
     
     Args:
         activity: Type of outdoor activity (e.g., 'hiking', 'cycling', 'climbing', 'camping')
         location: Location for the activity (city, mountain, trail name)
         timeframe: When planning to do the activity (e.g., 'this weekend', 'next week', specific dates)
+    
+    Returns:
+        Prompt template string instructing the LLM to assess weather suitability,
+        identify optimal activity windows, and provide safety recommendations based
+        on the activity type and conditions.
     """
     template = f"""You are helping plan outdoor activities with weather awareness. Follow this workflow:
 
@@ -454,19 +504,24 @@ Weather sensitivity levels:
     return template
 
 
-@mcp.prompt()
+@mcp.prompt(name="meteo__weather-aware-travel")
 async def weather_aware_travel(
     destination: str = "",
     travel_dates: str = "",
     trip_type: str = ""
 ) -> str:
     """
-    Integration pattern for combining weather forecasts with journey planning.
+    Generates an integration pattern for combining weather forecasts with journey planning.
     
     Args:
         destination: Travel destination (city, resort, or location name)
         travel_dates: When traveling (e.g., 'tomorrow', 'this weekend', 'January 10-15')
         trip_type: Type of trip (e.g., 'day trip', 'weekend getaway', 'ski trip', 'business travel')
+    
+    Returns:
+        Prompt template string instructing the LLM to integrate weather data with
+        travel planning, provide packing recommendations, and assess weather impact
+        on the journey.
     """
     template = f"""You are helping with weather-aware travel planning. Follow this workflow:
 
