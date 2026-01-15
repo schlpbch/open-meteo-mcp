@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server providing weather and snow condition tools via the [Open-Meteo API](https://open-meteo.com/).
 
-**Version 2.0** - Now powered by Python and FastMCP!
+**Version 2.0.1** - Now powered by Python and FastMCP!
 
 ## Features
 
