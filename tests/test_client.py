@@ -15,7 +15,7 @@ class TestOpenMeteoClient:
         """Test successful weather API call."""
         # Mock API response
         httpx_mock.add_response(
-            url="https://api.open-meteo.com/v1/forecast?latitude=46.9479&longitude=7.4474&forecast_days=7&timezone=auto&current_weather=true&daily=temperature_2m_max%2Ctemperature_2m_min%2Cprecipitation_sum%2Cweather_code%2Csunrise%2Csunset&hourly=temperature_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Crelative_humidity_2m",
+            url="https://api.open-meteo.com/v1/forecast?latitude=46.9479&longitude=7.4474&forecast_days=7&timezone=auto&current_weather=true&daily=temperature_2m_max%2Ctemperature_2m_min%2Cprecipitation_sum%2Cprecipitation_probability_max%2Cprecipitation_hours%2Cweather_code%2Csunrise%2Csunset%2Cuv_index_max%2Cwind_speed_10m_max%2Cwind_gusts_10m_max&hourly=temperature_2m%2Capparent_temperature%2Cprecipitation%2Cprecipitation_probability%2Cweather_code%2Cwind_speed_10m%2Cwind_gusts_10m%2Crelative_humidity_2m%2Ccloud_cover%2Cvisibility%2Cuv_index%2Cis_day",
             json={
                 "latitude": 46.9479,
                 "longitude": 7.4474,

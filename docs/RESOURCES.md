@@ -91,22 +91,7 @@ LLM responds: "Light rain expected (3mm). Bring an umbrella and expect possible 
 
 ---
 
-## Resource 2: Swiss Ski Resorts
-
-### Metadata
-
-- **Resource Name**: `swiss-ski-resorts`
-- **Resource URI**: `weather://swiss-ski-resorts`
-- **Resource Endpoint**: `/mcp/swiss-ski-resorts`
-- **Data Model**: `application/json`
-- **Implementation**: `SwissSkiResortsResource.java`
-- **Data File**: `src/main/resources/data/swiss-ski-resorts.json`
-
-### Purpose
-
-Provides accurate coordinates and metadata for major Swiss ski resorts, eliminating coordinate hallucination and ensuring precise weather/snow condition queries.
-
-### Data Structure
+...existing code...
 
 ```json
 {
@@ -177,14 +162,7 @@ Provides accurate coordinates and metadata for major Swiss ski resorts, eliminat
 ```
 User: "What are the snow conditions in Zermatt?"
 
-LLM reads swiss-ski-resorts resource → Finds Zermatt:
-- Latitude: 45.9763
-- Longitude: 7.6586
-- Elevation: 1620m
-- Ski Area: Matterhorn Glacier Paradise
-
-LLM calls getSnowConditions(45.9763, 7.6586)
-→ Accurate snow data for exact resort location
+...existing code...
 ```
 
 ### Implementation Details
@@ -343,10 +321,7 @@ All resources are automatically discovered and registered via the MCP protocol:
       "mimeType": "application/json"
     },
     {
-      "name": "swiss-ski-resorts",
-      "uri": "weather://swiss-ski-resorts",
-      "description": "Popular Swiss ski resort coordinates...",
-      "mimeType": "application/json"
+    ...existing code...
     },
     {
       "name": "weather-parameters",
@@ -419,7 +394,7 @@ public List<McpResource> mcpResources(
 ```
 src/main/resources/data/
 ├── weather-codes.json
-├── swiss-ski-resorts.json
+...existing code...
 └── weather-parameters.json
 ```
 
@@ -430,7 +405,7 @@ src/main/resources/data/
 ### When to Use Resources
 
 1. **Always** reference `weather-codes` when interpreting weather_code values
-2. **Always** use `swiss-ski-resorts` for ski resort coordinates
+...existing code...
 3. **Reference** `weather-parameters` when users ask about specific measurements
 4. **Cite** resources in responses to build user trust
 
@@ -449,7 +424,7 @@ src/main/resources/data/
 
 ```
 1. User mentions resort name
-2. Read swiss-ski-resorts resource
+...existing code...
 3. Find matching resort
 4. Extract coordinates
 5. Call getSnowConditions with coordinates

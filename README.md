@@ -83,13 +83,7 @@ WMO weather code reference with descriptions, categories, and travel impact.
 - **Format**: JSON
 - **Content**: 28 weather codes with interpretations
 
-### `swiss-ski-resorts`
-
-Popular Swiss ski resort coordinates and metadata.
-
-- **URI**: `weather://swiss-ski-resorts`
-- **Format**: JSON
-- **Content**: 16 major resorts (Zermatt, Verbier, St. Moritz, etc.)
+...existing code...
 
 ### `swiss-locations`
 
@@ -249,7 +243,7 @@ open-meteo-mcp/
 │       ├── helpers.py          # Utility functions
 │       └── data/               # JSON resource files
 │           ├── weather-codes.json
-│           ├── swiss-ski-resorts.json
+...existing code...
 │           └── weather-parameters.json
 ├── tests/
 │   ├── test_models.py

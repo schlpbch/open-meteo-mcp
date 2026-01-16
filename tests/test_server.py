@@ -18,20 +18,20 @@ class TestServerTools:
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "get_weather" in tool_names
-    
+            assert "meteo__get_weather" in tool_names
+
     async def test_get_snow_conditions_tool_registered(self):
         """Test that get_snow_conditions tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "get_snow_conditions" in tool_names
-    
+            assert "meteo__get_snow_conditions" in tool_names
+
     async def test_tool_count(self):
-        """Test that exactly 2 tools are registered."""
+        """Test that 4 tools are registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
-            assert len(tools) == 2
+            assert len(tools) == 4
 
 
 @pytest.mark.asyncio
@@ -42,28 +42,21 @@ class TestServerResources:
         """Test that weather codes resource is registered."""
         async with Client(mcp) as client:
             resources = await client.list_resources()
-            resource_uris = [resource.uri for resource in resources]
+            resource_uris = [str(resource.uri) for resource in resources]
             assert "weather://codes" in resource_uris
-    
-    async def test_swiss_ski_resorts_resource_registered(self):
-        """Test that Swiss ski resorts resource is registered."""
-        async with Client(mcp) as client:
-            resources = await client.list_resources()
-            resource_uris = [resource.uri for resource in resources]
-            assert "weather://swiss-ski-resorts" in resource_uris
-    
+
     async def test_weather_parameters_resource_registered(self):
         """Test that weather parameters resource is registered."""
         async with Client(mcp) as client:
             resources = await client.list_resources()
-            resource_uris = [resource.uri for resource in resources]
+            resource_uris = [str(resource.uri) for resource in resources]
             assert "weather://parameters" in resource_uris
     
     async def test_resource_count(self):
-        """Test that exactly 3 resources are registered."""
+        """Test that 4 resources are registered."""
         async with Client(mcp) as client:
             resources = await client.list_resources()
-            assert len(resources) == 3
+            assert len(resources) == 4
     
     async def test_weather_codes_content(self):
         """Test that weather codes resource returns valid JSON."""
@@ -75,21 +68,7 @@ class TestServerResources:
             # Should contain weather codes
             assert len(data) > 0
     
-    async def test_swiss_ski_resorts_content(self):
-        """Test that ski resorts resource returns valid JSON."""
-        async with Client(mcp) as client:
-            content = await client.read_resource("weather://swiss-ski-resorts")
-            # Should be valid JSON
-            data = json.loads(content[0].text)
-            assert isinstance(data, list)
-            # Should contain resort data
-            assert len(data) > 0
-            # Verify structure of first resort
-            if len(data) > 0:
-                resort = data[0]
-                assert "name" in resort
-                assert "latitude" in resort
-                assert "longitude" in resort
+
     
     async def test_weather_parameters_content(self):
         """Test that weather parameters resource returns valid JSON."""
@@ -111,24 +90,24 @@ class TestServerPrompts:
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "ski_trip_weather" in prompt_names
-    
+            assert "meteo__ski-trip-weather" in prompt_names
+
     async def test_plan_outdoor_activity_prompt_registered(self):
         """Test that outdoor activity prompt is registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "plan_outdoor_activity" in prompt_names
-    
+            assert "meteo__plan-outdoor-activity" in prompt_names
+
     async def test_weather_aware_travel_prompt_registered(self):
         """Test that weather aware travel prompt is registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "weather_aware_travel" in prompt_names
+            assert "meteo__weather-aware-travel" in prompt_names
     
     async def test_prompt_count(self):
-        """Test that exactly 3 prompts are registered."""
+        """Test that 3 prompts are registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             assert len(prompts) == 3
@@ -137,7 +116,7 @@ class TestServerPrompts:
         """Test ski trip weather prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "ski_trip_weather",
+                "meteo__ski-trip-weather",
                 arguments={"resort": "Zermatt", "dates": "this weekend"}
             )
             # Should return a message with content
@@ -154,7 +133,7 @@ class TestServerPrompts:
         """Test outdoor activity prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "plan_outdoor_activity",
+                "meteo__plan-outdoor-activity",
                 arguments={"activity": "hiking", "location": "Bern", "timeframe": "tomorrow"}
             )
             # Should return a message with content
@@ -169,7 +148,7 @@ class TestServerPrompts:
         """Test weather aware travel prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "weather_aware_travel",
+                "meteo__weather-aware-travel",
                 arguments={"destination": "Zürich", "travel_dates": "next week", "trip_type": "business"}
             )
             # Should return a message with content

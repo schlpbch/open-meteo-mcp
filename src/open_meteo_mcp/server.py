@@ -2,11 +2,7 @@
 
 from fastmcp import FastMCP
 from pathlib import Path
-import json
-from typing import Optional
-
 from .client import OpenMeteoClient
-from .helpers import interpret_weather_code, assess_ski_conditions
 
 # Initialize FastMCP server
 mcp = FastMCP("open-meteo")
@@ -279,25 +275,7 @@ async def weather_codes() -> str:
     return data_path.read_text(encoding="utf-8")
 
 
-@mcp.resource("weather://swiss-ski-resorts")
-async def swiss_ski_resorts() -> str:
-    """
-    Provides popular Swiss ski resort coordinates and metadata.
-    
-    Contains 16 major Swiss ski resorts including:
-    - Zermatt, Verbier, St. Moritz, Davos, Grindelwald
-    - Coordinates (latitude, longitude)
-    - Elevation
-    - Ski area names
-    
-    Use this resource to get accurate coordinates for ski resorts.
-    
-    Returns:
-        JSON string with ski resort data including names, coordinates,
-        elevations, and ski area information for 16 major Swiss resorts.
-    """
-    data_path = Path(__file__).parent / "data" / "swiss-ski-resorts.json"
-    return data_path.read_text(encoding="utf-8")
+
 
 
 @mcp.resource("weather://parameters")

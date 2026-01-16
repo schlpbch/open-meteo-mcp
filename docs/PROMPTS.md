@@ -32,7 +32,7 @@ Guides LLMs through a comprehensive ski trip planning workflow that combines res
 
 #### Step 1: Identify the Resort
 
-- Use `swiss-ski-resorts` resource to get accurate coordinates
+...existing code...
 - Extract latitude and longitude from resource data
 - Verify resort name matches (handles variations like "St Moritz" vs "St. Moritz")
 
@@ -100,7 +100,7 @@ Guides LLMs through a comprehensive ski trip planning workflow that combines res
 1. **Resort Lookup**:
 
    ```
-   Reading swiss-ski-resorts resource...
+...existing code...
    Found: Zermatt (45.9763°N, 7.6586°E)
    Elevation: 1620m
    Ski Area: Matterhorn Glacier Paradise
@@ -144,7 +144,7 @@ Guides LLMs through a comprehensive ski trip planning workflow that combines res
 
 ### Related Resources
 
-- **swiss-ski-resorts**: Resort coordinates and metadata
+...existing code...
 - **weather-codes**: Interpret weather condition codes
 - **weather-parameters**: Understanding snow depth, snowfall metrics
 
@@ -620,7 +620,7 @@ When used alongside journey planning tools:
 ### Related Resources
 
 - **weather-codes**: Interpret weather conditions
-- **swiss-ski-resorts**: Mountain destination coordinates
+...existing code...
 - **weather-parameters**: Understanding weather metrics
 
 ### Related Tools
