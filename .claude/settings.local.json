@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"\nimport json\n\n# Read the original seights.json\nwith open\\(''c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\\\\doc\\\\seights.json'', ''r'', encoding=''utf-8''\\) as f:\n    data = json.load\\(f\\)\n\n# Read sights 11-55\nwith open\\(''c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\\\\doc\\\\sights_11_85_part1.json'', ''r'', encoding=''utf-8''\\) as f:\n    part1 = json.load\\(f\\)\n\n# Read sights 56-85\nwith open\\(''c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\\\\doc\\\\sights_56_85_part2.json'', ''r'', encoding=''utf-8''\\) as f:\n    part2 = json.load\\(f\\)\n\n# Merge all sights\ndata[''sights''].extend\\(part1\\)\ndata[''sights''].extend\\(part2\\)\n\n# Sort by rank\ndata[''sights''].sort\\(key=lambda x: x[''rank'']\\)\n\n# Update total count\ndata[''meta''][''total''] = len\\(data[''sights'']\\)\n\n# Write updated file\nwith open\\(''c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\\\\doc\\\\seights.json'', ''w'', encoding=''utf-8''\\) as f:\n    json.dump\\(data, f, ensure_ascii=False, indent=2\\)\n\nprint\\(f''Successfully merged {len\\(data[\"\"sights\"\"]\\)} sights into seights.json''\\)\n\")",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(dir \"c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\\\\doc\\\\*.json\")",
+      "Bash(findstr:*)",
+      "Bash(uv run:*)",
+      "Bash(git push:*)",
+      "Bash(git -C \"c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\" log --oneline -20)",
+      "Bash(git -C \"c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\" status)",
+      "Bash(git -C \"c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\" log --oneline --all)",
+      "Bash(git -C \"c:\\\\Users\\\\schlp\\\\code\\\\swiss-tourismus-mcp\" ls-files:*)",
+      "Bash(wc:*)",
+      "Bash(uv pip install:*)",
+      "Bash(git commit:*)",
+      "Bash(fastmcp --version:*)"
+    ]
+  }
+}
