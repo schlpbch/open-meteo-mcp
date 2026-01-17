@@ -15,7 +15,9 @@
       "Bash(wc:*)",
       "Bash(uv pip install:*)",
       "Bash(git commit:*)",
-      "Bash(fastmcp --version:*)"
+      "Bash(fastmcp --version:*)",
+      "Bash(dir:*)",
+      "Bash(gh release:*)"
     ]
   }
 }
