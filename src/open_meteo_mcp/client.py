@@ -180,7 +180,8 @@ class OpenMeteoClient:
         latitude: float,
         longitude: float,
         forecast_days: int = 5,
-        include_pollen: bool = True
+        include_pollen: bool = True,
+        timezone: str = "auto"
     ) -> "AirQualityForecast":
         """
         Get air quality forecast for a location.
@@ -190,6 +191,7 @@ class OpenMeteoClient:
             longitude: Longitude in decimal degrees
             forecast_days: Number of forecast days (1-5, default: 5)
             include_pollen: Include pollen data (Europe only, default: True)
+            timezone: Timezone for timestamps (default: 'auto')
         
         Returns:
             AirQualityForecast with AQI, pollutants, UV index, and pollen data
@@ -227,6 +229,7 @@ class OpenMeteoClient:
             "latitude": latitude,
             "longitude": longitude,
             "forecast_days": min(max(forecast_days, 1), 5),  # Clamp to 1-5
+            "timezone": timezone,
             "current": "european_aqi,us_aqi,pm10,pm2_5,uv_index",
             "hourly": ",".join(hourly_params)
         }
