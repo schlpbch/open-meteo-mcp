@@ -3,6 +3,7 @@
 import httpx
 import structlog
 from typing import Optional
+from datetime import datetime
 from .models import WeatherForecast, SnowConditions
 
 logger = structlog.get_logger()
@@ -264,22 +265,22 @@ class OpenMeteoClient:
     ) -> "GeocodingResponse":
         """
         Search for locations by name using geocoding API.
-        
+
         Args:
             name: Location name to search (e.g., "Zurich", "Bern", "Zermatt")
             count: Number of results to return (1-100, default: 10)
             language: Language for results (default: "en")
             country: Optional ISO 3166-1 alpha-2 country code filter (e.g., "CH" for Switzerland)
-        
+
         Returns:
             GeocodingResponse with list of matching locations
-        
+
         Raises:
             httpx.HTTPError: If the API request fails
             ValueError: If the response cannot be parsed
         """
         from .models import GeocodingResponse
-        
+
         self.logger.debug(
             "searching_location",
             name=name,
@@ -287,7 +288,7 @@ class OpenMeteoClient:
             language=language,
             country=country
         )
-        
+
         # Build query parameters
         params = {
             "name": name,
@@ -295,26 +296,46 @@ class OpenMeteoClient:
             "language": language,
             "format": "json"
         }
-        
+
         if country:
             params["country"] = country
-        
+
         try:
             # Use geocoding API base URL
             geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
             response = await self.client.get(geocoding_url, params=params)
             response.raise_for_status()
-            
+
             data = response.json()
             results = data.get("results", [])
+
+            # FIX: Apply client-side country filtering if country is specified
+            # The API's country parameter acts as a "bias" not a strict filter
+            if country and results:
+                country_upper = country.upper()
+                filtered_results = [
+                    r for r in results
+                    if r.get("country_code", "").upper() == country_upper
+                ]
+                # If we have matches after filtering, use them; otherwise return all
+                if filtered_results:
+                    results = filtered_results
+                    self.logger.debug(
+                        "location_search_country_filtered",
+                        name=name,
+                        country=country,
+                        filtered_count=len(results)
+                    )
+
             self.logger.debug(
                 "location_search_completed",
                 name=name,
                 results_count=len(results) if results is not None else 0
             )
-            
-            return GeocodingResponse(**data)
-            
+
+            # Return the response with filtered results
+            return GeocodingResponse(results=results, generationtime_ms=data.get("generationtime_ms"))
+
         except httpx.HTTPStatusError as e:
             self.logger.error(
                 "geocoding_api_http_error",
@@ -329,6 +350,149 @@ class OpenMeteoClient:
             self.logger.error("geocoding_api_unexpected_error", error=str(e))
             raise ValueError(f"Failed to parse geocoding data: {e}") from e
     
+    async def get_historical_weather(
+        self,
+        latitude: float,
+        longitude: float,
+        start_date: str,
+        end_date: str,
+        hourly: bool = False,
+        timezone: str = "auto"
+    ) -> "WeatherForecast":
+        """
+        Get historical weather data for a location.
+
+        Args:
+            latitude: Latitude in decimal degrees
+            longitude: Longitude in decimal degrees
+            start_date: Start date in ISO format (YYYY-MM-DD)
+            end_date: End date in ISO format (YYYY-MM-DD)
+            hourly: Include hourly historical data (default: False)
+            timezone: Timezone for timestamps (default: 'auto')
+
+        Returns:
+            WeatherForecast object with historical weather data
+
+        Raises:
+            httpx.HTTPError: If the API request fails
+            ValueError: If the response cannot be parsed
+        """
+        from .models import WeatherForecast
+
+        self.logger.debug(
+            "fetching_historical_weather",
+            latitude=latitude,
+            longitude=longitude,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        # Build query parameters
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "start_date": start_date,
+            "end_date": end_date,
+            "timezone": timezone,
+            "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max"
+        }
+
+        if hourly:
+            params["hourly"] = "temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,cloud_cover"
+
+        try:
+            response = await self.client.get("/archive", params=params)
+            response.raise_for_status()
+
+            data = response.json()
+            self.logger.debug("historical_weather_fetched_successfully", latitude=latitude, longitude=longitude)
+
+            return WeatherForecast(**data)
+
+        except httpx.HTTPStatusError as e:
+            self.logger.error(
+                "historical_weather_api_http_error",
+                status_code=e.response.status_code,
+                error=str(e)
+            )
+            raise
+        except httpx.HTTPError as e:
+            self.logger.error("historical_weather_api_request_error", error=str(e))
+            raise
+        except Exception as e:
+            self.logger.error("historical_weather_api_unexpected_error", error=str(e))
+            raise ValueError(f"Failed to parse historical weather data: {e}") from e
+
+    async def get_marine_conditions(
+        self,
+        latitude: float,
+        longitude: float,
+        forecast_days: int = 7,
+        include_hourly: bool = True,
+        timezone: str = "auto"
+    ) -> "MarineConditions":
+        """
+        Get marine conditions for a location (waves, swell, currents).
+
+        Args:
+            latitude: Latitude in decimal degrees
+            longitude: Longitude in decimal degrees
+            forecast_days: Number of forecast days (1-16, default: 7)
+            include_hourly: Include hourly data (default: True)
+            timezone: Timezone for timestamps (default: 'auto')
+
+        Returns:
+            MarineConditions object with wave and marine data
+
+        Raises:
+            httpx.HTTPError: If the API request fails
+            ValueError: If the response cannot be parsed
+        """
+        from .models import MarineConditions
+
+        self.logger.debug(
+            "fetching_marine_conditions",
+            latitude=latitude,
+            longitude=longitude,
+            forecast_days=forecast_days
+        )
+
+        # Build query parameters
+        marine_url = "https://marine-api.open-meteo.com/v1/marine"
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "forecast_days": min(max(forecast_days, 1), 16),
+            "timezone": timezone,
+            "daily": "wave_height_max,wave_direction_dominant,wave_period_max,swell_wave_height_max,swell_wave_direction_dominant,swell_wave_period_max"
+        }
+
+        if include_hourly:
+            params["hourly"] = "wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period"
+
+        try:
+            response = await self.client.get(marine_url, params=params)
+            response.raise_for_status()
+
+            data = response.json()
+            self.logger.debug("marine_conditions_fetched_successfully", latitude=latitude, longitude=longitude)
+
+            return MarineConditions(**data)
+
+        except httpx.HTTPStatusError as e:
+            self.logger.error(
+                "marine_api_http_error",
+                status_code=e.response.status_code,
+                error=str(e)
+            )
+            raise
+        except httpx.HTTPError as e:
+            self.logger.error("marine_api_request_error", error=str(e))
+            raise
+        except Exception as e:
+            self.logger.error("marine_api_unexpected_error", error=str(e))
+            raise ValueError(f"Failed to parse marine data: {e}") from e
+
     async def close(self):
         """Close the HTTP client and release resources."""
         await self.client.aclose()

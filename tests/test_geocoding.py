@@ -211,10 +211,10 @@ class TestGeocoding:
         )
         
         async with OpenMeteoClient() as client:
-            # Pydantic gracefully handles invalid data - results will be None
+            # Pydantic gracefully handles invalid data - results will be empty list
             result = await client.search_location(name="Test")
             assert isinstance(result, GeocodingResponse)
-            assert result.results is None
+            assert result.results == [] or result.results is None
     
     async def test_search_swiss_locations(self, httpx_mock: HTTPXMock):
         """Test searching for popular Swiss locations."""

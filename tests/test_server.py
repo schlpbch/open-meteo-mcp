@@ -27,11 +27,60 @@ class TestServerTools:
             tool_names = [tool.name for tool in tools]
             assert "meteo__get_snow_conditions" in tool_names
 
-    async def test_tool_count(self):
-        """Test that 4 tools are registered."""
+    async def test_get_weather_alerts_tool_registered(self):
+        """Test that get_weather_alerts tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
-            assert len(tools) == 4
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__get_weather_alerts" in tool_names
+
+    async def test_get_historical_weather_tool_registered(self):
+        """Test that get_historical_weather tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__get_historical_weather" in tool_names
+
+    async def test_get_marine_conditions_tool_registered(self):
+        """Test that get_marine_conditions tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__get_marine_conditions" in tool_names
+
+    async def test_get_comfort_index_tool_registered(self):
+        """Test that get_comfort_index tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__get_comfort_index" in tool_names
+
+    async def test_get_astronomy_tool_registered(self):
+        """Test that get_astronomy tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__get_astronomy" in tool_names
+
+    async def test_search_location_swiss_tool_registered(self):
+        """Test that search_location_swiss tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__search_location_swiss" in tool_names
+
+    async def test_compare_locations_tool_registered(self):
+        """Test that compare_locations tool is registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            tool_names = [tool.name for tool in tools]
+            assert "meteo__compare_locations" in tool_names
+
+    async def test_tool_count(self):
+        """Test that 11 tools are registered."""
+        async with Client(mcp) as client:
+            tools = await client.list_tools()
+            assert len(tools) == 11
 
 
 @pytest.mark.asyncio

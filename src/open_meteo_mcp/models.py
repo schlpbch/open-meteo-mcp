@@ -252,7 +252,7 @@ class AirQualityForecast(BaseModel):
 # Response Models - Snow Conditions
 class SnowConditions(BaseModel):
     """Complete snow conditions response from Open-Meteo API."""
-    
+
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
     elevation: Optional[float] = Field(None, description="Elevation in meters")
@@ -261,6 +261,80 @@ class SnowConditions(BaseModel):
     utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
     hourly: Optional[HourlySnow] = Field(None, description="Hourly snow data")
     daily: Optional[DailySnow] = Field(None, description="Daily snow data")
-    
+
+    class Config:
+        populate_by_name = True
+
+
+# Response Models - Marine Conditions
+class HourlyMarine(BaseModel):
+    """Hourly marine conditions data."""
+
+    time: List[str] = Field(default_factory=list, description="Timestamps for each hour")
+    wave_height: Optional[List[float]] = Field(None, description="Wave height (m)")
+    wave_direction: Optional[List[int]] = Field(None, description="Wave direction (degrees)")
+    wave_period: Optional[List[float]] = Field(None, description="Wave period (seconds)")
+    wind_wave_height: Optional[List[float]] = Field(None, description="Wind wave height (m)")
+    wind_wave_direction: Optional[List[int]] = Field(None, description="Wind wave direction (degrees)")
+    wind_wave_period: Optional[List[float]] = Field(None, description="Wind wave period (seconds)")
+    swell_wave_height: Optional[List[float]] = Field(None, description="Swell wave height (m)")
+    swell_wave_direction: Optional[List[int]] = Field(None, description="Swell wave direction (degrees)")
+    swell_wave_period: Optional[List[float]] = Field(None, description="Swell wave period (seconds)")
+
+    class Config:
+        populate_by_name = True
+
+
+class DailyMarine(BaseModel):
+    """Daily marine conditions data."""
+
+    time: List[str] = Field(default_factory=list, description="Dates for each day")
+    wave_height_max: Optional[List[float]] = Field(None, description="Maximum wave height (m)")
+    wave_direction_dominant: Optional[List[int]] = Field(None, description="Dominant wave direction (degrees)")
+    wave_period_max: Optional[List[float]] = Field(None, description="Maximum wave period (seconds)")
+    swell_wave_height_max: Optional[List[float]] = Field(None, description="Maximum swell wave height (m)")
+    swell_wave_direction_dominant: Optional[List[int]] = Field(None, description="Dominant swell wave direction (degrees)")
+    swell_wave_period_max: Optional[List[float]] = Field(None, description="Maximum swell wave period (seconds)")
+
+    class Config:
+        populate_by_name = True
+
+
+class MarineConditions(BaseModel):
+    """Complete marine conditions response from Open-Meteo Marine API."""
+
+    latitude: float = Field(..., description="Latitude of the location")
+    longitude: float = Field(..., description="Longitude of the location")
+    elevation: Optional[float] = Field(None, description="Elevation in meters")
+    timezone: str = Field(..., description="Timezone name")
+    timezone_abbreviation: Optional[str] = Field(None, description="Timezone abbreviation")
+    utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
+    hourly: Optional[HourlyMarine] = Field(None, description="Hourly marine data")
+    daily: Optional[DailyMarine] = Field(None, description="Daily marine data")
+
+    class Config:
+        populate_by_name = True
+
+
+# Response Models - Weather Alerts
+class WeatherAlert(BaseModel):
+    """Weather alert/warning data."""
+
+    type: str = Field(..., description="Alert type: storm, heat, cold, uv, wind, air_quality")
+    severity: str = Field(..., description="Alert severity: advisory, watch, warning")
+    start: str = Field(..., description="Alert start time (ISO format)")
+    end: str = Field(..., description="Alert end time (ISO format)")
+    description: str = Field(..., description="Alert description")
+    recommendations: List[str] = Field(default_factory=list, description="Safety recommendations")
+
+
+class WeatherAlertsResponse(BaseModel):
+    """Response containing weather alerts for a location."""
+
+    latitude: float = Field(..., description="Latitude of the location")
+    longitude: float = Field(..., description="Longitude of the location")
+    timezone: str = Field(..., description="Timezone name")
+    alerts: List[WeatherAlert] = Field(default_factory=list, description="List of active alerts")
+
     class Config:
         populate_by_name = True

@@ -11,6 +11,11 @@ from open_meteo_mcp.helpers import (
     calculate_wind_chill,
     get_seasonal_advice,
     format_precipitation,
+    generate_weather_alerts,
+    calculate_comfort_index,
+    calculate_astronomy_data,
+    normalize_timezone,
+    normalize_air_quality_timezone,
 )
 
 
@@ -241,3 +246,192 @@ class TestFormatPrecipitation:
         result = format_precipitation(15.0)
         assert "15.0mm" in result
         assert "very heavy" in result.lower()
+
+
+class TestGenerateWeatherAlerts:
+    """Test weather alert generation."""
+
+    def test_heat_alert_generation(self):
+        """Test heat alert is generated for high temperatures."""
+        current = {"temperature": 32, "windspeed": 10, "weathercode": 0}
+        hourly = {
+            "temperature_2m": [32, 33, 34, 35, 35, 34, 33, 32] + [20] * 16,
+            "wind_gusts_10m": [10] * 24,
+            "uv_index": [3] * 24,
+            "time": [f"2024-01-18T{h:02d}:00" for h in range(24)]
+        }
+        daily = {
+            "temperature_2m_max": [35],
+            "temperature_2m_min": [30],
+            "precipitation_sum": [0],
+            "weather_code": [0],
+            "time": ["2024-01-18"]
+        }
+        alerts = generate_weather_alerts(current, hourly, daily, "Europe/Zurich")
+        assert len(alerts) > 0
+        heat_alerts = [a for a in alerts if a["type"] == "heat"]
+        assert len(heat_alerts) > 0
+
+    def test_cold_alert_generation(self):
+        """Test cold alert is generated for low temperatures."""
+        current = {"temperature": -15, "windspeed": 10, "weathercode": 0}
+        hourly = {
+            "temperature_2m": [-15, -16, -17] + [10] * 21,
+            "wind_gusts_10m": [10] * 24,
+            "uv_index": [1] * 24,
+            "time": [f"2024-01-18T{h:02d}:00" for h in range(24)]
+        }
+        daily = {
+            "temperature_2m_max": [-10],
+            "temperature_2m_min": [-20],
+            "precipitation_sum": [0],
+            "weather_code": [0],
+            "time": ["2024-01-18"]
+        }
+        alerts = generate_weather_alerts(current, hourly, daily, "Europe/Zurich")
+        cold_alerts = [a for a in alerts if a["type"] == "cold"]
+        assert len(cold_alerts) > 0
+
+    def test_no_alerts_for_normal_conditions(self):
+        """Test no alerts for normal weather."""
+        current = {"temperature": 15, "windspeed": 10, "weathercode": 2}
+        hourly = {
+            "temperature_2m": [15] * 24,
+            "wind_gusts_10m": [15] * 24,
+            "uv_index": [3] * 24,
+            "time": [f"2024-01-18T{h:02d}:00" for h in range(24)]
+        }
+        daily = {
+            "temperature_2m_max": [18],
+            "temperature_2m_min": [12],
+            "precipitation_sum": [0],
+            "weather_code": [2],
+            "time": ["2024-01-18"]
+        }
+        alerts = generate_weather_alerts(current, hourly, daily, "Europe/Zurich")
+        # May have some alerts, but not severe ones
+        severe_alerts = [a for a in alerts if a["severity"] == "warning"]
+        assert len(severe_alerts) == 0
+
+
+class TestCalculateComfortIndex:
+    """Test comfort index calculation."""
+
+    def test_perfect_comfort(self):
+        """Test comfort index for perfect conditions."""
+        weather = {
+            "temperature": 20,
+            "relative_humidity_2m": 50,
+            "wind_speed_10m": 5,
+            "uv_index": 2,
+            "precipitation_probability": 0,
+            "weather_code": 0
+        }
+        air_quality = {"european_aqi": 20}
+        result = calculate_comfort_index(weather, air_quality)
+        assert result["overall"] >= 80
+        assert result["recommendation"] == "Perfect for outdoor activities"
+
+    def test_poor_comfort(self):
+        """Test comfort index for poor conditions."""
+        weather = {
+            "temperature": -20,
+            "relative_humidity_2m": 80,
+            "wind_speed_10m": 40,
+            "uv_index": 0,
+            "precipitation_probability": 100,
+            "weather_code": 99
+        }
+        air_quality = {"european_aqi": 150}
+        result = calculate_comfort_index(weather, air_quality)
+        assert result["overall"] < 40
+        assert "Poor" in result["recommendation"] or "Very poor" in result["recommendation"]
+
+    def test_all_factors_present(self):
+        """Test that all comfort factors are calculated."""
+        weather = {
+            "temperature": 15,
+            "relative_humidity_2m": 60,
+            "wind_speed_10m": 15,
+            "uv_index": 4,
+            "precipitation_probability": 30,
+            "weather_code": 2
+        }
+        result = calculate_comfort_index(weather)
+        assert "overall" in result
+        assert "factors" in result
+        assert "thermal_comfort" in result["factors"]
+        assert "air_quality" in result["factors"]
+        assert "precipitation_risk" in result["factors"]
+        assert "uv_safety" in result["factors"]
+        assert "weather_condition" in result["factors"]
+
+
+class TestCalculateAstronomyData:
+    """Test astronomy data calculation."""
+
+    def test_astronomy_data_contains_times(self):
+        """Test astronomy data returns sunrise/sunset times."""
+        result = calculate_astronomy_data(47.3769, 8.5417, "Europe/Zurich")
+        assert "sunrise" in result
+        assert "sunset" in result
+        assert "day_length_hours" in result
+
+    def test_astronomy_data_contains_golden_hour(self):
+        """Test astronomy data includes golden hour."""
+        result = calculate_astronomy_data(47.3769, 8.5417, "Europe/Zurich")
+        assert "golden_hour" in result
+        assert "start" in result["golden_hour"]
+        assert "end" in result["golden_hour"]
+
+    def test_astronomy_data_contains_blue_hour(self):
+        """Test astronomy data includes blue hour."""
+        result = calculate_astronomy_data(47.3769, 8.5417, "Europe/Zurich")
+        assert "blue_hour" in result
+        assert "start" in result["blue_hour"]
+        assert "end" in result["blue_hour"]
+
+
+class TestNormalizeTimezone:
+    """Test timezone normalization."""
+
+    def test_normalize_timezone_updates_field(self):
+        """Test timezone field is updated."""
+        response_data = {
+            "timezone": "Europe/Zurich",
+            "hourly": {"time": []},
+            "daily": {"time": []}
+        }
+        result = normalize_timezone(response_data, "UTC")
+        assert result["timezone"] == "UTC"
+
+    def test_normalize_handles_invalid_data(self):
+        """Test normalization handles invalid input gracefully."""
+        response_data = None
+        result = normalize_timezone(response_data or {})
+        assert isinstance(result, dict)
+
+
+class TestNormalizeAirQualityTimezone:
+    """Test air quality timezone normalization."""
+
+    def test_normalize_air_quality_updates_timezone(self):
+        """Test air quality timezone is updated."""
+        air_quality_data = {
+            "timezone": "GMT",
+            "hourly": {"time": []},
+            "current": {}
+        }
+        result = normalize_air_quality_timezone(air_quality_data, "Europe/Zurich")
+        assert result["timezone"] == "Europe/Zurich"
+
+    def test_normalize_air_quality_preserves_data(self):
+        """Test normalization preserves other data."""
+        air_quality_data = {
+            "timezone": "GMT",
+            "hourly": {"time": [], "pm2_5": [10, 15]},
+            "latitude": 47.3
+        }
+        result = normalize_air_quality_timezone(air_quality_data)
+        assert result["latitude"] == 47.3
+        assert result["hourly"]["pm2_5"] == [10, 15]

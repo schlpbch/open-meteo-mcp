@@ -2,6 +2,7 @@
 
 from fastmcp import FastMCP
 from pathlib import Path
+from datetime import datetime
 from .client import OpenMeteoClient
 
 # Initialize FastMCP server
@@ -201,40 +202,40 @@ async def get_air_quality(
 ) -> dict:
     """
     Retrieves air quality forecast including AQI, pollutants, UV index, and pollen data.
-    
+
     Monitor air quality for health-aware outdoor planning, allergy management,
     and UV exposure assessment. Provides both European and US Air Quality Indices
     along with detailed pollutant measurements.
-    
+
     **Examples**:
     - "What's the air quality in Zurich?" → AQI, PM2.5, PM10, ozone levels
     - "Pollen forecast for Bern?" → Grass, birch, alder pollen counts
     - "UV index for tomorrow?" → UV radiation forecast
-    
+
     **Provides**:
     - European AQI (0-100+) and US AQI (0-500)
     - Particulate matter (PM10, PM2.5)
     - Gases (O3, NO2, SO2, CO, NH3)
     - UV index (current and clear sky)
     - Pollen data (Europe only): alder, birch, grass, mugwort, olive, ragweed
-    
+
     **Health Guidelines**:
     - European AQI: 0-20 (Good), 20-40 (Fair), 40-60 (Moderate), 60-80 (Poor), 80-100 (Very Poor), 100+ (Extremely Poor)
     - US AQI: 0-50 (Good), 51-100 (Moderate), 101-150 (Unhealthy for Sensitive), 151-200 (Unhealthy), 201-300 (Very Unhealthy), 301-500 (Hazardous)
     - UV Index: 0-2 (Low), 3-5 (Moderate), 6-7 (High), 8-10 (Very High), 11+ (Extreme)
-    
+
     **Use this tool when**:
     - Planning outdoor activities for people with asthma/allergies
     - Assessing air quality for exercise or sports
     - Checking pollen levels during allergy season
     - Monitoring UV exposure for sun safety
-    
+
     Args:
         latitude: Latitude in decimal degrees
         longitude: Longitude in decimal degrees
         forecast_days: Number of forecast days (1-5, default: 5)
         include_pollen: Include pollen data (default: true, Europe only)
-    
+
     Returns:
         Dictionary containing:
         - current (dict): Current AQI, pollutants (PM10, PM2.5, O3, NO2, SO2, CO), UV index
@@ -249,6 +250,511 @@ async def get_air_quality(
         include_pollen=include_pollen
     )
     return forecast.model_dump()
+
+
+@mcp.tool(name="meteo__get_weather_alerts")
+async def get_weather_alerts(
+    latitude: float,
+    longitude: float,
+    forecast_hours: int = 24,
+    timezone: str = "auto"
+) -> dict:
+    """
+    Generate weather alerts based on thresholds and current forecast.
+
+    Automatically identifies severe weather conditions and generates actionable alerts.
+
+    **Alert Types**:
+    - Heat warnings (temperature > 30°C for 3+ hours)
+    - Cold warnings (temperature < -10°C)
+    - Storm warnings (wind gusts > 80 km/h or thunderstorms)
+    - UV warnings (UV index > 8)
+    - Wind advisories (gusts 50-80 km/h)
+
+    **Severity Levels**:
+    - Advisory: Precautionary, plan accordingly
+    - Watch: Conditions favorable for alert type
+    - Warning: Conditions expected, take precautions
+
+    **Examples**:
+    - Check for heat waves during summer
+    - Monitor for storms before outdoor events
+    - Plan sun protection based on UV alerts
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        forecast_hours: Hours to check for alerts (1-168, default: 24)
+        timezone: Timezone for timestamps (default: 'auto')
+
+    Returns:
+        Dictionary containing:
+        - latitude, longitude: Location coordinates
+        - timezone: Timezone name
+        - alerts (list): List of active alerts with type, severity, timing, and recommendations
+    """
+    from .helpers import generate_weather_alerts
+
+    # Get weather forecast
+    forecast = await client.get_weather(
+        latitude=latitude,
+        longitude=longitude,
+        forecast_days=min(max(forecast_hours // 24 + 1, 1), 16),
+        include_hourly=True,
+        timezone=timezone
+    )
+
+    # Generate alerts
+    current = forecast.current_weather.model_dump() if forecast.current_weather else {}
+    hourly = forecast.hourly.model_dump() if forecast.hourly else {}
+    daily = forecast.daily.model_dump() if forecast.daily else {}
+
+    alerts = generate_weather_alerts(current, hourly, daily, forecast.timezone)
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "timezone": forecast.timezone,
+        "alerts": alerts
+    }
+
+
+@mcp.tool(name="meteo__get_historical_weather")
+async def get_historical_weather(
+    latitude: float,
+    longitude: float,
+    start_date: str,
+    end_date: str,
+    include_hourly: bool = False,
+    timezone: str = "auto"
+) -> dict:
+    """
+    Retrieves historical weather data for trend analysis and research.
+
+    Access 80+ years of historical weather data from Open-Meteo archives.
+
+    **Use cases**:
+    - Compare weather patterns year-over-year
+    - Climate trend analysis
+    - Event planning based on historical patterns
+    - Research and academic studies
+
+    **Examples**:
+    - "How was the weather in Zurich on this date last year?"
+    - "Get average temperatures for July over the past 10 years"
+    - "Compare winter snow patterns"
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        start_date: Start date in ISO format (YYYY-MM-DD)
+        end_date: End date in ISO format (YYYY-MM-DD)
+        include_hourly: Include hourly historical data (default: false)
+        timezone: Timezone for timestamps (default: 'auto')
+
+    Returns:
+        Dictionary containing:
+        - historical weather data with temperature, precipitation, wind, etc.
+        - daily summaries (temperature min/max, precipitation, weather codes)
+        - optional hourly data if requested
+    """
+    historical = await client.get_historical_weather(
+        latitude=latitude,
+        longitude=longitude,
+        start_date=start_date,
+        end_date=end_date,
+        hourly=include_hourly,
+        timezone=timezone
+    )
+    return historical.model_dump()
+
+
+@mcp.tool(name="meteo__get_marine_conditions")
+async def get_marine_conditions(
+    latitude: float,
+    longitude: float,
+    forecast_days: int = 7,
+    include_hourly: bool = True,
+    timezone: str = "auto"
+) -> dict:
+    """
+    Retrieves marine conditions for lakes and coastal areas.
+
+    Get wave height, swell, period, and wind-driven sea states for water activities.
+
+    **Examples**:
+    - Check Lake Geneva conditions for sailing
+    - Monitor Zurich Lake for water sports
+    - Plan boating activities based on wave forecast
+
+    **Provides**:
+    - Wave height (m)
+    - Wave direction and period (seconds)
+    - Swell characteristics
+    - Wind-wave parameters
+    - Hourly and daily forecasts
+
+    **Use this tool when**:
+    - Planning water sports (sailing, windsurfing, kayaking)
+    - Boating safety assessment
+    - Recreation planning on Swiss lakes
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        forecast_days: Number of forecast days (1-16, default: 7)
+        include_hourly: Include hourly data (default: true)
+        timezone: Timezone for timestamps (default: 'auto')
+
+    Returns:
+        Dictionary containing:
+        - wave_height, wave_direction, wave_period
+        - swell wave data
+        - wind-wave parameters
+        - hourly and daily forecasts
+    """
+    conditions = await client.get_marine_conditions(
+        latitude=latitude,
+        longitude=longitude,
+        forecast_days=forecast_days,
+        include_hourly=include_hourly,
+        timezone=timezone
+    )
+    return conditions.model_dump()
+
+
+@mcp.tool(name="meteo__get_comfort_index")
+async def get_comfort_index(
+    latitude: float,
+    longitude: float,
+    timezone: str = "auto"
+) -> dict:
+    """
+    Calculates an outdoor activity comfort index (0-100).
+
+    Combines weather, air quality, UV, and precipitation factors into a single
+    comfort score for planning outdoor activities.
+
+    **Score Interpretation**:
+    - 80-100: Perfect for outdoor activities
+    - 60-79: Good conditions
+    - 40-59: Fair conditions, plan accordingly
+    - 20-39: Poor conditions, seek indoor alternatives
+    - 0-19: Very poor conditions
+
+    **Factors Included**:
+    - Thermal comfort (temperature, humidity, wind chill)
+    - Air quality (PM2.5, PM10, AQI)
+    - Precipitation risk
+    - UV safety (skin protection needs)
+    - Weather conditions (storms, visibility)
+
+    **Examples**:
+    - "Is it good weather for hiking?"
+    - "What's the outdoor comfort level?"
+    - "Can I do outdoor sports today?"
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        timezone: Timezone for timestamps (default: 'auto')
+
+    Returns:
+        Dictionary containing:
+        - overall: Comfort index (0-100)
+        - factors: Breakdown of individual factors
+        - recommendation: Text recommendation for activities
+    """
+    from .helpers import calculate_comfort_index
+
+    # Get current weather and air quality
+    weather_forecast = await client.get_weather(
+        latitude=latitude,
+        longitude=longitude,
+        forecast_days=1,
+        include_hourly=False,
+        timezone=timezone
+    )
+
+    air_quality_forecast = await client.get_air_quality(
+        latitude=latitude,
+        longitude=longitude,
+        forecast_days=1,
+        include_pollen=False
+    )
+
+    # Extract current conditions
+    weather = weather_forecast.current_weather.model_dump() if weather_forecast.current_weather else {}
+    current_aqi = air_quality_forecast.current.model_dump() if air_quality_forecast.current else {}
+
+    # Calculate comfort index
+    comfort = calculate_comfort_index(weather, current_aqi)
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "timezone": weather_forecast.timezone,
+        "comfort_index": comfort
+    }
+
+
+@mcp.tool(name="meteo__get_astronomy")
+async def get_astronomy(
+    latitude: float,
+    longitude: float,
+    timezone: str = "auto"
+) -> dict:
+    """
+    Provides astronomical data for a location (sunrise, sunset, golden hour).
+
+    Useful for photography, event planning, and outdoor activity scheduling.
+
+    **Data Provided**:
+    - Sunrise and sunset times
+    - Day length
+    - Golden hour (best lighting for photography)
+    - Blue hour (evening twilight)
+    - Moon phase information
+    - Best photography windows
+
+    **Use cases**:
+    - Photography location scouting
+    - Outdoor event planning
+    - Sunrise/sunset viewing trips
+    - Time-lapse and video production planning
+
+    **Examples**:
+    - "When is sunset in Zurich?"
+    - "Best time for golden hour photography?"
+    - "What's the sunrise time for hiking?"
+
+    Args:
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        timezone: Timezone for timestamps (default: 'auto' tries to auto-detect)
+
+    Returns:
+        Dictionary containing:
+        - sunrise: Sunrise time (ISO format)
+        - sunset: Sunset time (ISO format)
+        - day_length_hours: Total daylight hours
+        - golden_hour: Start and end times for optimal lighting
+        - blue_hour: Twilight window for photography
+        - moon_phase: Current lunar phase
+        - best_photography_windows: Recommended times for photos
+    """
+    from .helpers import calculate_astronomy_data
+
+    # Resolve timezone
+    if timezone == "auto":
+        # Get weather to determine local timezone
+        weather = await client.get_weather(
+            latitude=latitude,
+            longitude=longitude,
+            forecast_days=1,
+            include_hourly=False,
+            timezone="auto"
+        )
+        timezone = weather.timezone
+
+    astronomy = calculate_astronomy_data(latitude, longitude, timezone)
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "timezone": timezone,
+        "astronomy": astronomy
+    }
+
+
+@mcp.tool(name="meteo__search_location_swiss")
+async def search_location_swiss(
+    name: str,
+    include_features: bool = False,
+    language: str = "en",
+    count: int = 10
+) -> dict:
+    """
+    Search for locations in Switzerland with optional geographic features.
+
+    Specialized search for Swiss locations including cities, mountains, lakes, and passes.
+
+    **Feature Types Supported**:
+    - PPL: Populated places (cities, towns, villages)
+    - MT: Mountains and peaks
+    - LK: Lakes and water bodies
+    - PS: Mountain passes
+    - STM: Streams and rivers
+
+    **Examples**:
+    - "Find Zurich" → Zurich city
+    - "Search for Matterhorn" → Mountain peak
+    - "Find Lake Geneva" → Lake location
+    - "Find Gotthard Pass" → Mountain pass
+
+    **Use this tool when**:
+    - Searching specifically within Switzerland
+    - Looking for mountains, lakes, or geographic features
+    - Need precise coordinates for Swiss locations
+    - Want to filter by location type
+
+    Args:
+        name: Location name to search
+        include_features: Include geographic features like mountains, lakes (default: false)
+        language: Language for results (de, fr, it, en; default: en)
+        count: Number of results (1-50, default: 10)
+
+    Returns:
+        Dictionary containing:
+        - results: List of matching Swiss locations with coordinates
+        - total: Number of results found
+        - search_type: Type of search performed
+    """
+    # Get all results
+    response = await client.search_location(
+        name=name,
+        count=count * 2,  # Get extra results for post-processing
+        language=language,
+        country="CH"
+    )
+
+    results = response.results if response.results else []
+
+    # If include_features is True, keep all; otherwise filter to populated places
+    if not include_features:
+        # Filter to primarily populated places
+        results = [r for r in results if not r.get("feature_code") or r.get("feature_code").startswith("PPL")]
+
+    # Sort by population if available
+    results.sort(key=lambda x: x.get("population", 0), reverse=True)
+
+    # Limit to requested count
+    results = results[:count]
+
+    return {
+        "query": name,
+        "results": [r.model_dump() if hasattr(r, 'model_dump') else r for r in results],
+        "total": len(results),
+        "country": "CH",
+        "include_features": include_features,
+        "language": language
+    }
+
+
+@mcp.tool(name="meteo__compare_locations")
+async def compare_locations(
+    locations: list,
+    criteria: str = "best_overall",
+    forecast_days: int = 1
+) -> dict:
+    """
+    Compare weather conditions across multiple locations.
+
+    Rank locations by specified weather criteria to find the best destination.
+
+    **Comparison Criteria**:
+    - best_overall: Overall comfort and conditions
+    - warmest: Highest temperature
+    - driest: Lowest precipitation probability
+    - sunniest: Best weather codes and visibility
+    - best_air_quality: Lowest AQI
+    - calmest: Lowest wind speeds
+
+    **Examples**:
+    - Compare weekend weather between Zurich, Bern, and Geneva
+    - Find the warmest location for outdoor activities
+    - Identify the driest location for hiking
+    - Compare air quality across multiple cities
+
+    **Use this tool when**:
+    - Choosing between multiple destination options
+    - Planning group activities
+    - Finding optimal conditions for specific activities
+
+    Args:
+        locations: List of location dicts with 'name', 'latitude', 'longitude'
+        criteria: Comparison criteria (default: 'best_overall')
+        forecast_days: Days to forecast (1-16, default: 1)
+
+    Returns:
+        Dictionary containing:
+        - criteria: The comparison criteria used
+        - locations: Ranked list of locations with scores
+        - winner: Best location based on criteria
+        - details: Key weather metrics for each location
+    """
+    from .helpers import calculate_comfort_index
+
+    results = []
+
+    # Fetch data for each location
+    for loc in locations:
+        try:
+            name = loc.get("name", "Unknown")
+            lat = loc.get("latitude", 46.95)
+            lon = loc.get("longitude", 7.45)
+
+            # Get weather
+            weather = await client.get_weather(
+                latitude=lat,
+                longitude=lon,
+                forecast_days=forecast_days,
+                include_hourly=False,
+                timezone="auto"
+            )
+
+            # Get air quality
+            air_quality = await client.get_air_quality(
+                latitude=lat,
+                longitude=lon,
+                forecast_days=1,
+                include_pollen=False
+            )
+
+            current_weather = weather.current_weather.model_dump() if weather.current_weather else {}
+            current_aqi = air_quality.current.model_dump() if air_quality.current else {}
+
+            # Calculate comfort
+            comfort = calculate_comfort_index(current_weather, current_aqi)
+
+            results.append({
+                "name": name,
+                "latitude": lat,
+                "longitude": lon,
+                "temperature": current_weather.get("temperature", 0),
+                "wind_speed": current_weather.get("windspeed", 0),
+                "weather_code": current_weather.get("weathercode", 0),
+                "comfort_index": comfort["overall"],
+                "aqi": current_aqi.get("european_aqi", 0),
+                "recommendation": comfort["recommendation"]
+            })
+
+        except Exception as e:
+            results.append({
+                "name": loc.get("name", "Unknown"),
+                "error": str(e)
+            })
+
+    # Sort by criteria
+    if criteria == "warmest":
+        results.sort(key=lambda x: x.get("temperature", 0), reverse=True)
+    elif criteria == "driest":
+        results.sort(key=lambda x: x.get("wind_speed", 999))
+    elif criteria == "sunniest":
+        results.sort(key=lambda x: x.get("weather_code", 99))
+    elif criteria == "best_air_quality":
+        results.sort(key=lambda x: x.get("aqi", 999))
+    elif criteria == "calmest":
+        results.sort(key=lambda x: x.get("wind_speed", 999))
+    else:  # best_overall
+        results.sort(key=lambda x: x.get("comfort_index", 0), reverse=True)
+
+    return {
+        "criteria": criteria,
+        "locations": results,
+        "winner": results[0] if results else None,
+        "comparison_timestamp": datetime.now().isoformat()
+    }
 
 
 # ============================================================================
