@@ -623,10 +623,10 @@ async def search_location_swiss(
     # If include_features is True, keep all; otherwise filter to populated places
     if not include_features:
         # Filter to primarily populated places
-        results = [r for r in results if not r.get("feature_code") or r.get("feature_code").startswith("PPL")]
+        results = [r for r in results if not r.feature_code or r.feature_code.startswith("PPL")]
 
     # Sort by population if available
-    results.sort(key=lambda x: x.get("population", 0), reverse=True)
+    results.sort(key=lambda x: x.population or 0, reverse=True)
 
     # Limit to requested count
     results = results[:count]
