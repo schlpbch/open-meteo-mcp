@@ -5,6 +5,14 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
+# Location Model
+class Location(BaseModel):
+    """Simple location with latitude and longitude."""
+
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
+
+
 # Input Models
 class WeatherInput(BaseModel):
     """Input parameters for weather forecast requests."""
