@@ -6,7 +6,7 @@ from datetime import datetime
 from .client import OpenMeteoClient
 
 # Initialize FastMCP server
-mcp = FastMCP("open-meteo")
+mcp = FastMCP("open_meteo")
 
 # Initialize API client
 client = OpenMeteoClient()
@@ -16,24 +16,25 @@ client = OpenMeteoClient()
 # TOOLS
 # ============================================================================
 
+
 @mcp.tool(name="meteo__get_weather")
 async def get_weather(
     latitude: float,
     longitude: float,
     forecast_days: int = 7,
     include_hourly: bool = True,
-    timezone: str = "auto"
+    timezone: str = "auto",
 ) -> dict:
     """
     Retrieves weather forecast for a location (temperature, rain, sunshine).
-    
+
     Get current weather conditions for any location in Switzerland (or worldwide).
-    
+
     **Examples**:
     - "What's the weather in Zürich?" → latitude: 47.3769, longitude: 8.5417
     - "Weather at destination" → Use coordinates from journey endpoint
     - "Is it raining in Bern?" → Check precipitation field
-    
+
     **Provides**:
     - Current temperature (°C)
     - Weather condition (clear, cloudy, rain, snow)
@@ -41,24 +42,24 @@ async def get_weather(
     - Wind speed (km/h)
     - Humidity (%)
     - Hourly and daily forecasts
-    
+
     **Data Source**: Open-Meteo API (free, no API key required)
-    
+
     **Performance**: < 200ms
-    
+
     **Use this tool when**:
     - User asks about weather conditions
     - Planning outdoor activities
     - Checking if weather affects travel
     - Combined with journey planning
-    
+
     Args:
         latitude: Latitude in decimal degrees (e.g., 46.9479 for Bern)
         longitude: Longitude in decimal degrees (e.g., 7.4474 for Bern)
         forecast_days: Number of forecast days (1-16, default: 7)
         include_hourly: Include hourly forecasts (default: true)
         timezone: Timezone for timestamps (e.g., 'Europe/Zurich', default: 'auto')
-    
+
     Returns:
         Dictionary containing:
         - current (dict): Current weather with temperature, weather_code, wind_speed, humidity
@@ -71,7 +72,7 @@ async def get_weather(
         longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=include_hourly,
-        timezone=timezone
+        timezone=timezone,
     )
     return forecast.model_dump()
 
@@ -82,38 +83,38 @@ async def get_snow_conditions(
     longitude: float,
     forecast_days: int = 7,
     include_hourly: bool = True,
-    timezone: str = "Europe/Zurich"
+    timezone: str = "Europe/Zurich",
 ) -> dict:
     """
     Retrieves snow conditions and forecasts for mountain locations.
-    
+
     **Parameters**:
     - latitude (required): Latitude in decimal degrees
     - longitude (required): Longitude in decimal degrees
     - forecast_days (optional): Number of forecast days (1-16, default: 7)
     - include_hourly (optional): Include hourly data (default: true)
     - timezone (optional): Timezone for timestamps (default: "Europe/Zurich")
-    
+
     **Returns**:
     - Current snow depth (meters)
     - Recent snowfall (cm)
     - Forecast snowfall
     - Temperature trends
     - Hourly and daily snow data
-    
+
     **Use this tool for**:
     - Ski trip planning
     - Checking snow conditions at resorts
     - Mountain weather forecasts
     - Avalanche risk assessment (via snow depth trends)
-    
+
     Args:
         latitude: Latitude in decimal degrees (e.g., 45.9763 for Zermatt)
         longitude: Longitude in decimal degrees (e.g., 7.6586 for Zermatt)
         forecast_days: Number of forecast days (1-16, default: 7)
         include_hourly: Include hourly data (default: true)
         timezone: Timezone for timestamps (default: 'Europe/Zurich')
-    
+
     Returns:
         Dictionary containing:
         - current (dict): Current snow depth and recent snowfall
@@ -126,53 +127,50 @@ async def get_snow_conditions(
         longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=include_hourly,
-        timezone=timezone
+        timezone=timezone,
     )
     return conditions.model_dump()
 
 
 @mcp.tool(name="meteo__search_location")
 async def search_location(
-    name: str,
-    count: int = 10,
-    language: str = "en",
-    country: str = ""
+    name: str, count: int = 10, language: str = "en", country: str = ""
 ) -> dict:
     """
     Searches for locations by name to get coordinates for weather queries.
-    
+
     Convert location names to coordinates using fuzzy search. Essential for
     natural language weather queries like "weather in Zurich" instead of
     requiring latitude/longitude coordinates.
-    
+
     **Examples**:
     - "Zurich" → Returns Zurich, Switzerland with coordinates
     - "Bern" → Returns multiple matches (Bern CH, Bern US, etc.)
     - "Zermatt" → Returns ski resort with elevation data
     - "Lake Geneva" → Returns lake coordinates
-    
+
     **Features**:
     - Fuzzy matching (handles typos)
     - Multi-language support
     - Country filtering (e.g., country="CH" for Switzerland only)
     - Returns population, timezone, elevation
-    
+
     **Workflow**:
     1. Search for location by name
     2. Select result (usually first is best match)
     3. Use latitude/longitude for get_weather or get_snow_conditions
-    
+
     **Use this tool when**:
     - User provides location name instead of coordinates
     - Need to find coordinates for a city, mountain, or landmark
     - Want to discover locations in a specific country
-    
+
     Args:
         name: Location name to search (e.g., 'Zurich', 'Eiger', 'Lake Lucerne')
         count: Number of results to return (1-100, default: 10)
         language: Language for results (default: 'en', options: 'de', 'fr', 'it', etc.)
         country: Optional country code filter (e.g., 'CH' for Switzerland, 'DE' for Germany)
-    
+
     Returns:
         Dictionary containing:
         - results (list[dict]): List of matching locations, each with:
@@ -185,10 +183,7 @@ async def search_location(
           - population (int | None): Population if applicable
     """
     response = await client.search_location(
-        name=name,
-        count=count,
-        language=language,
-        country=country if country else None
+        name=name, count=count, language=language, country=country if country else None
     )
     return response.model_dump()
 
@@ -199,7 +194,7 @@ async def get_air_quality(
     longitude: float,
     forecast_days: int = 5,
     include_pollen: bool = True,
-    timezone: str = "auto"
+    timezone: str = "auto",
 ) -> dict:
     """
     Retrieves air quality forecast including AQI, pollutants, UV index, and pollen data.
@@ -250,17 +245,14 @@ async def get_air_quality(
         longitude=longitude,
         forecast_days=forecast_days,
         include_pollen=include_pollen,
-        timezone=timezone
+        timezone=timezone,
     )
     return forecast.model_dump()
 
 
 @mcp.tool(name="meteo__get_weather_alerts")
 async def get_weather_alerts(
-    latitude: float,
-    longitude: float,
-    forecast_hours: int = 24,
-    timezone: str = "auto"
+    latitude: float, longitude: float, forecast_hours: int = 24, timezone: str = "auto"
 ) -> dict:
     """
     Generate weather alerts based on thresholds and current forecast.
@@ -304,7 +296,7 @@ async def get_weather_alerts(
         longitude=longitude,
         forecast_days=min(max(forecast_hours // 24 + 1, 1), 16),
         include_hourly=True,
-        timezone=timezone
+        timezone=timezone,
     )
 
     # Generate alerts
@@ -318,7 +310,7 @@ async def get_weather_alerts(
         "latitude": latitude,
         "longitude": longitude,
         "timezone": forecast.timezone,
-        "alerts": alerts
+        "alerts": alerts,
     }
 
 
@@ -329,7 +321,7 @@ async def get_historical_weather(
     start_date: str,
     end_date: str,
     include_hourly: bool = False,
-    timezone: str = "auto"
+    timezone: str = "auto",
 ) -> dict:
     """
     Retrieves historical weather data for trend analysis and research.
@@ -367,7 +359,7 @@ async def get_historical_weather(
         start_date=start_date,
         end_date=end_date,
         hourly=include_hourly,
-        timezone=timezone
+        timezone=timezone,
     )
     return historical.model_dump()
 
@@ -378,7 +370,7 @@ async def get_marine_conditions(
     longitude: float,
     forecast_days: int = 7,
     include_hourly: bool = True,
-    timezone: str = "auto"
+    timezone: str = "auto",
 ) -> dict:
     """
     Retrieves marine conditions for lakes and coastal areas.
@@ -421,19 +413,17 @@ async def get_marine_conditions(
         longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=include_hourly,
-        timezone=timezone
+        timezone=timezone,
     )
     return conditions.model_dump()
 
 
 @mcp.tool(name="meteo__get_comfort_index")
 async def get_comfort_index(
-    latitude: float,
-    longitude: float,
-    timezone: str = "auto"
+    latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict:
     """
-    Calculates an outdoor activity comfort index (0-100).
+    Calculates outdoor activity comfort index (0-100). Takes latitude, longitude, and timezone parameters.
 
     Combines weather, air quality, UV, and precipitation factors into a single
     comfort score for planning outdoor activities.
@@ -476,19 +466,24 @@ async def get_comfort_index(
         longitude=longitude,
         forecast_days=1,
         include_hourly=False,
-        timezone=timezone
+        timezone=timezone,
     )
 
     air_quality_forecast = await client.get_air_quality(
-        latitude=latitude,
-        longitude=longitude,
-        forecast_days=1,
-        include_pollen=False
+        latitude=latitude, longitude=longitude, forecast_days=1, include_pollen=False
     )
 
     # Extract current conditions
-    weather = weather_forecast.current_weather.model_dump() if weather_forecast.current_weather else {}
-    current_aqi = air_quality_forecast.current.model_dump() if air_quality_forecast.current else {}
+    weather = (
+        weather_forecast.current_weather.model_dump()
+        if weather_forecast.current_weather
+        else {}
+    )
+    current_aqi = (
+        air_quality_forecast.current.model_dump()
+        if air_quality_forecast.current
+        else {}
+    )
 
     # Calculate comfort index
     comfort = calculate_comfort_index(weather, current_aqi)
@@ -497,15 +492,13 @@ async def get_comfort_index(
         "latitude": latitude,
         "longitude": longitude,
         "timezone": weather_forecast.timezone,
-        "comfort_index": comfort
+        "comfort_index": comfort,
     }
 
 
 @mcp.tool(name="meteo__get_astronomy")
 async def get_astronomy(
-    latitude: float,
-    longitude: float,
-    timezone: str = "auto"
+    latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict:
     """
     Provides astronomical data for a location (sunrise, sunset, golden hour).
@@ -556,7 +549,7 @@ async def get_astronomy(
             longitude=longitude,
             forecast_days=1,
             include_hourly=False,
-            timezone="auto"
+            timezone="auto",
         )
         timezone = weather.timezone
 
@@ -566,16 +559,13 @@ async def get_astronomy(
         "latitude": latitude,
         "longitude": longitude,
         "timezone": timezone,
-        "astronomy": astronomy
+        "astronomy": astronomy,
     }
 
 
 @mcp.tool(name="meteo__search_location_swiss")
 async def search_location_swiss(
-    name: str,
-    include_features: bool = False,
-    language: str = "en",
-    count: int = 10
+    name: str, include_features: bool = False, language: str = "en", count: int = 10
 ) -> dict:
     """
     Search for locations in Switzerland with optional geographic features.
@@ -618,7 +608,7 @@ async def search_location_swiss(
         name=name,
         count=count * 2,  # Get extra results for post-processing
         language=language,
-        country="CH"
+        country="CH",
     )
 
     results = response.results if response.results else []
@@ -626,7 +616,9 @@ async def search_location_swiss(
     # If include_features is True, keep all; otherwise filter to populated places
     if not include_features:
         # Filter to primarily populated places
-        results = [r for r in results if not r.feature_code or r.feature_code.startswith("PPL")]
+        results = [
+            r for r in results if not r.feature_code or r.feature_code.startswith("PPL")
+        ]
 
     # Sort by population if available
     results.sort(key=lambda x: x.population or 0, reverse=True)
@@ -636,19 +628,17 @@ async def search_location_swiss(
 
     return {
         "query": name,
-        "results": [r.model_dump() if hasattr(r, 'model_dump') else r for r in results],
+        "results": [r.model_dump() if hasattr(r, "model_dump") else r for r in results],
         "total": len(results),
         "country": "CH",
         "include_features": include_features,
-        "language": language
+        "language": language,
     }
 
 
 @mcp.tool(name="meteo__compare_locations")
 async def compare_locations(
-    locations: list,
-    criteria: str = "best_overall",
-    forecast_days: int = 1
+    locations: list, criteria: str = "best_overall", forecast_days: int = 1
 ) -> dict:
     """
     Compare weather conditions across multiple locations.
@@ -703,40 +693,40 @@ async def compare_locations(
                 longitude=lon,
                 forecast_days=forecast_days,
                 include_hourly=False,
-                timezone="auto"
+                timezone="auto",
             )
 
             # Get air quality
             air_quality = await client.get_air_quality(
-                latitude=lat,
-                longitude=lon,
-                forecast_days=1,
-                include_pollen=False
+                latitude=lat, longitude=lon, forecast_days=1, include_pollen=False
             )
 
-            current_weather = weather.current_weather.model_dump() if weather.current_weather else {}
-            current_aqi = air_quality.current.model_dump() if air_quality.current else {}
+            current_weather = (
+                weather.current_weather.model_dump() if weather.current_weather else {}
+            )
+            current_aqi = (
+                air_quality.current.model_dump() if air_quality.current else {}
+            )
 
             # Calculate comfort
             comfort = calculate_comfort_index(current_weather, current_aqi)
 
-            results.append({
-                "name": name,
-                "latitude": lat,
-                "longitude": lon,
-                "temperature": current_weather.get("temperature", 0),
-                "wind_speed": current_weather.get("windspeed", 0),
-                "weather_code": current_weather.get("weathercode", 0),
-                "comfort_index": comfort["overall"],
-                "aqi": current_aqi.get("european_aqi", 0),
-                "recommendation": comfort["recommendation"]
-            })
+            results.append(
+                {
+                    "name": name,
+                    "latitude": lat,
+                    "longitude": lon,
+                    "temperature": current_weather.get("temperature", 0),
+                    "wind_speed": current_weather.get("windspeed", 0),
+                    "weather_code": current_weather.get("weathercode", 0),
+                    "comfort_index": comfort["overall"],
+                    "aqi": current_aqi.get("european_aqi", 0),
+                    "recommendation": comfort["recommendation"],
+                }
+            )
 
         except Exception as e:
-            results.append({
-                "name": loc.get("name", "Unknown"),
-                "error": str(e)
-            })
+            results.append({"name": loc.get("name", "Unknown"), "error": str(e)})
 
     # Sort by criteria
     if criteria == "warmest":
@@ -756,50 +746,47 @@ async def compare_locations(
         "criteria": criteria,
         "locations": results,
         "winner": results[0] if results else None,
-        "comparison_timestamp": datetime.now().isoformat()
+        "comparison_timestamp": datetime.now().isoformat(),
     }
 
 
 @mcp.tool(name="meteo__get_weather_alerts")
 async def get_weather_alerts(
-    latitude: float,
-    longitude: float,
-    forecast_hours: int = 24,
-    timezone: str = "auto"
+    latitude: float, longitude: float, forecast_hours: int = 24, timezone: str = "auto"
 ) -> dict:
     """
     Generate weather alerts and warnings based on forecast data analysis.
-    
+
     Transforms raw weather data into actionable warnings for various conditions
     like storms, extreme temperatures, high UV, and poor air quality.
-    
+
     **Alert Types**:
     - Storm: High wind gusts (>80 km/h), severe weather codes
     - Heat: High temperature (>30°C) with recommendations
-    - Cold: Low temperature (<-5°C) with wind chill warnings  
+    - Cold: Low temperature (<-5°C) with wind chill warnings
     - UV: High UV index (>8) with skin protection advice
     - Air Quality: Poor AQI (European AQI >80) with health guidance
     - Wind: Strong sustained winds (>60 km/h) affecting activities
     - Precipitation: Heavy rain/snow (>20mm/hour) travel warnings
-    
+
     **Severity Levels**:
     - Advisory: Be aware, minimal impact on activities
-    - Watch: Conditions developing, plan accordingly  
+    - Watch: Conditions developing, plan accordingly
     - Warning: Take action, significant impact expected
-    
+
     **Use Cases**:
     - Pre-trip safety assessment
     - Outdoor activity planning
     - Travel preparation
     - Health condition management
     - Event planning
-    
+
     Args:
         latitude: Latitude in decimal degrees
         longitude: Longitude in decimal degrees
         forecast_hours: Hours to analyze for alerts (1-168, default: 24)
         timezone: Timezone for timestamps (default: auto)
-    
+
     Returns:
         Dictionary containing:
         - alerts (list): Active alerts with type, severity, timing, recommendations
@@ -808,167 +795,196 @@ async def get_weather_alerts(
         - recommendations (list): Prioritized action items
     """
     from datetime import datetime, timedelta
-    
+
     # Get weather data
     forecast_days = max(1, (forecast_hours + 23) // 24)  # Convert to days, rounded up
     weather = await client.get_weather(
         latitude=latitude,
-        longitude=longitude, 
+        longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=True,
-        timezone=timezone
+        timezone=timezone,
     )
-    
+
     # Get air quality data
     try:
         air_quality = await client.get_air_quality(
             latitude=latitude,
             longitude=longitude,
             forecast_days=min(forecast_days, 5),  # Air quality limited to 5 days
-            include_hourly=True
+            include_hourly=True,
         )
     except:
         air_quality = None
-    
+
     alerts = []
     current_time = datetime.now()
-    
+
     # Analyze current conditions
-    current = weather.current_weather if hasattr(weather, 'current_weather') else None
-    
+    current = weather.current_weather if hasattr(weather, "current_weather") else None
+
     # Temperature alerts
-    if current and hasattr(current, 'temperature'):
+    if current and hasattr(current, "temperature"):
         temp = current.temperature
         if temp > 30:
-            alerts.append({
-                "type": "heat",
-                "severity": "warning" if temp > 35 else "watch" if temp > 32 else "advisory",
-                "start": current_time.isoformat(),
-                "end": (current_time + timedelta(hours=6)).isoformat(),
-                "description": f"High temperature alert: {temp:.1f}°C",
-                "recommendations": [
-                    "Stay hydrated and drink plenty of water",
-                    "Avoid prolonged sun exposure during peak hours (11-15h)", 
-                    "Wear light-colored, loose-fitting clothing",
-                    "Seek shade and air conditioning when possible"
-                ]
-            })
+            alerts.append(
+                {
+                    "type": "heat",
+                    "severity": (
+                        "warning" if temp > 35 else "watch" if temp > 32 else "advisory"
+                    ),
+                    "start": current_time.isoformat(),
+                    "end": (current_time + timedelta(hours=6)).isoformat(),
+                    "description": f"High temperature alert: {temp:.1f}°C",
+                    "recommendations": [
+                        "Stay hydrated and drink plenty of water",
+                        "Avoid prolonged sun exposure during peak hours (11-15h)",
+                        "Wear light-colored, loose-fitting clothing",
+                        "Seek shade and air conditioning when possible",
+                    ],
+                }
+            )
         elif temp < -5:
             # Check for wind chill
-            wind_speed = getattr(current, 'windspeed', 0)
+            wind_speed = getattr(current, "windspeed", 0)
             apparent_temp = temp - (wind_speed * 0.6)  # Simplified wind chill
-            alerts.append({
-                "type": "cold", 
-                "severity": "warning" if apparent_temp < -15 else "watch" if apparent_temp < -10 else "advisory",
-                "start": current_time.isoformat(),
-                "end": (current_time + timedelta(hours=6)).isoformat(),
-                "description": f"Cold temperature alert: {temp:.1f}°C (feels like {apparent_temp:.1f}°C)",
-                "recommendations": [
-                    "Dress in warm layers and cover exposed skin",
-                    "Wear insulated, waterproof footwear",
-                    "Limit time outdoors and watch for frostbite signs",
-                    "Keep emergency supplies in vehicles"
-                ]
-            })
-    
+            alerts.append(
+                {
+                    "type": "cold",
+                    "severity": (
+                        "warning"
+                        if apparent_temp < -15
+                        else "watch" if apparent_temp < -10 else "advisory"
+                    ),
+                    "start": current_time.isoformat(),
+                    "end": (current_time + timedelta(hours=6)).isoformat(),
+                    "description": f"Cold temperature alert: {temp:.1f}°C (feels like {apparent_temp:.1f}°C)",
+                    "recommendations": [
+                        "Dress in warm layers and cover exposed skin",
+                        "Wear insulated, waterproof footwear",
+                        "Limit time outdoors and watch for frostbite signs",
+                        "Keep emergency supplies in vehicles",
+                    ],
+                }
+            )
+
     # Wind alerts
-    if current and hasattr(current, 'windspeed'):
+    if current and hasattr(current, "windspeed"):
         wind_speed = current.windspeed
         if wind_speed > 60:
-            alerts.append({
-                "type": "wind",
-                "severity": "warning" if wind_speed > 80 else "watch",
-                "start": current_time.isoformat(), 
-                "end": (current_time + timedelta(hours=6)).isoformat(),
-                "description": f"High wind alert: {wind_speed:.1f} km/h",
-                "recommendations": [
-                    "Secure loose outdoor objects and furniture",
-                    "Avoid driving high-profile vehicles",
-                    "Stay away from trees and power lines",
-                    "Consider postponing outdoor activities"
-                ]
-            })
-    
+            alerts.append(
+                {
+                    "type": "wind",
+                    "severity": "warning" if wind_speed > 80 else "watch",
+                    "start": current_time.isoformat(),
+                    "end": (current_time + timedelta(hours=6)).isoformat(),
+                    "description": f"High wind alert: {wind_speed:.1f} km/h",
+                    "recommendations": [
+                        "Secure loose outdoor objects and furniture",
+                        "Avoid driving high-profile vehicles",
+                        "Stay away from trees and power lines",
+                        "Consider postponing outdoor activities",
+                    ],
+                }
+            )
+
     # Weather code alerts (storms, severe weather)
-    if current and hasattr(current, 'weathercode'):
+    if current and hasattr(current, "weathercode"):
         weather_code = current.weathercode
         # Thunderstorm codes: 95-99
         if weather_code >= 95:
-            alerts.append({
-                "type": "storm",
-                "severity": "warning",
-                "start": current_time.isoformat(),
-                "end": (current_time + timedelta(hours=3)).isoformat(), 
-                "description": "Thunderstorm alert: Lightning and heavy precipitation",
-                "recommendations": [
-                    "Seek indoor shelter immediately",
-                    "Avoid using electrical equipment",
-                    "Stay away from windows and doors", 
-                    "Do not take shelter under trees"
-                ]
-            })
-    
+            alerts.append(
+                {
+                    "type": "storm",
+                    "severity": "warning",
+                    "start": current_time.isoformat(),
+                    "end": (current_time + timedelta(hours=3)).isoformat(),
+                    "description": "Thunderstorm alert: Lightning and heavy precipitation",
+                    "recommendations": [
+                        "Seek indoor shelter immediately",
+                        "Avoid using electrical equipment",
+                        "Stay away from windows and doors",
+                        "Do not take shelter under trees",
+                    ],
+                }
+            )
+
     # UV alerts from daily data
-    if hasattr(weather, 'daily') and weather.daily and hasattr(weather.daily, 'uv_index_max'):
+    if (
+        hasattr(weather, "daily")
+        and weather.daily
+        and hasattr(weather.daily, "uv_index_max")
+    ):
         max_uv = max(weather.daily.uv_index_max[:1])  # Today's max UV
         if max_uv > 8:
-            alerts.append({
-                "type": "uv",
-                "severity": "warning" if max_uv > 10 else "watch",
-                "start": (current_time.replace(hour=10, minute=0)).isoformat(),
-                "end": (current_time.replace(hour=16, minute=0)).isoformat(),
-                "description": f"High UV alert: UV Index {max_uv:.0f}",
-                "recommendations": [
-                    "Apply broad-spectrum SPF 30+ sunscreen every 2 hours",
-                    "Wear protective clothing and wide-brimmed hat",
-                    "Seek shade between 10am-4pm",
-                    "Wear UV-blocking sunglasses"
-                ]
-            })
-    
-    # Air quality alerts  
-    if air_quality and hasattr(air_quality, 'current'):
-        aqi = getattr(air_quality.current, 'european_aqi', None)
+            alerts.append(
+                {
+                    "type": "uv",
+                    "severity": "warning" if max_uv > 10 else "watch",
+                    "start": (current_time.replace(hour=10, minute=0)).isoformat(),
+                    "end": (current_time.replace(hour=16, minute=0)).isoformat(),
+                    "description": f"High UV alert: UV Index {max_uv:.0f}",
+                    "recommendations": [
+                        "Apply broad-spectrum SPF 30+ sunscreen every 2 hours",
+                        "Wear protective clothing and wide-brimmed hat",
+                        "Seek shade between 10am-4pm",
+                        "Wear UV-blocking sunglasses",
+                    ],
+                }
+            )
+
+    # Air quality alerts
+    if air_quality and hasattr(air_quality, "current"):
+        aqi = getattr(air_quality.current, "european_aqi", None)
         if aqi and aqi > 80:
-            alerts.append({
-                "type": "air_quality",
-                "severity": "warning" if aqi > 120 else "watch",
-                "start": current_time.isoformat(),
-                "end": (current_time + timedelta(hours=12)).isoformat(),
-                "description": f"Poor air quality alert: European AQI {aqi:.0f}",
-                "recommendations": [
-                    "Limit outdoor activities, especially strenuous exercise",
-                    "Keep windows closed and use air purifiers if available", 
-                    "Sensitive groups should stay indoors",
-                    "Wear N95 masks when outdoors if needed"
-                ]
-            })
-    
+            alerts.append(
+                {
+                    "type": "air_quality",
+                    "severity": "warning" if aqi > 120 else "watch",
+                    "start": current_time.isoformat(),
+                    "end": (current_time + timedelta(hours=12)).isoformat(),
+                    "description": f"Poor air quality alert: European AQI {aqi:.0f}",
+                    "recommendations": [
+                        "Limit outdoor activities, especially strenuous exercise",
+                        "Keep windows closed and use air purifiers if available",
+                        "Sensitive groups should stay indoors",
+                        "Wear N95 masks when outdoors if needed",
+                    ],
+                }
+            )
+
     # Analyze hourly forecast for precipitation alerts
-    if hasattr(weather, 'hourly') and weather.hourly:
+    if hasattr(weather, "hourly") and weather.hourly:
         hourly_data = weather.hourly
-        hours_to_check = min(forecast_hours, len(hourly_data.time) if hasattr(hourly_data, 'time') else 24)
-        
+        hours_to_check = min(
+            forecast_hours,
+            len(hourly_data.time) if hasattr(hourly_data, "time") else 24,
+        )
+
         for i in range(hours_to_check):
-            if hasattr(hourly_data, 'precipitation') and i < len(hourly_data.precipitation):
+            if hasattr(hourly_data, "precipitation") and i < len(
+                hourly_data.precipitation
+            ):
                 precip = hourly_data.precipitation[i]
                 if precip > 10:  # Heavy precipitation threshold
                     hour_time = current_time + timedelta(hours=i)
-                    alerts.append({
-                        "type": "precipitation", 
-                        "severity": "warning" if precip > 20 else "watch",
-                        "start": hour_time.isoformat(),
-                        "end": (hour_time + timedelta(hours=1)).isoformat(),
-                        "description": f"Heavy precipitation alert: {precip:.1f}mm/hour expected",
-                        "recommendations": [
-                            "Allow extra travel time due to possible delays",
-                            "Drive carefully and reduce speed",
-                            "Avoid flood-prone areas and underpasses",
-                            "Carry umbrella and waterproof gear"
-                        ]
-                    })
+                    alerts.append(
+                        {
+                            "type": "precipitation",
+                            "severity": "warning" if precip > 20 else "watch",
+                            "start": hour_time.isoformat(),
+                            "end": (hour_time + timedelta(hours=1)).isoformat(),
+                            "description": f"Heavy precipitation alert: {precip:.1f}mm/hour expected",
+                            "recommendations": [
+                                "Allow extra travel time due to possible delays",
+                                "Drive carefully and reduce speed",
+                                "Avoid flood-prone areas and underpasses",
+                                "Carry umbrella and waterproof gear",
+                            ],
+                        }
+                    )
                     break  # Only show first heavy precipitation event
-    
+
     # Generate summary
     alert_counts = {
         "storm": len([a for a in alerts if a["type"] == "storm"]),
@@ -977,40 +993,48 @@ async def get_weather_alerts(
         "uv": len([a for a in alerts if a["type"] == "uv"]),
         "wind": len([a for a in alerts if a["type"] == "wind"]),
         "air_quality": len([a for a in alerts if a["type"] == "air_quality"]),
-        "precipitation": len([a for a in alerts if a["type"] == "precipitation"])
+        "precipitation": len([a for a in alerts if a["type"] == "precipitation"]),
     }
-    
+
     severity_counts = {
         "warning": len([a for a in alerts if a["severity"] == "warning"]),
-        "watch": len([a for a in alerts if a["severity"] == "watch"]), 
-        "advisory": len([a for a in alerts if a["severity"] == "advisory"])
+        "watch": len([a for a in alerts if a["severity"] == "watch"]),
+        "advisory": len([a for a in alerts if a["severity"] == "advisory"]),
     }
-    
+
     # Current conditions summary
     conditions = {}
     if current:
         conditions = {
-            "temperature": getattr(current, 'temperature', None),
-            "wind_speed": getattr(current, 'windspeed', None),
-            "weather_code": getattr(current, 'weathercode', None)
+            "temperature": getattr(current, "temperature", None),
+            "wind_speed": getattr(current, "windspeed", None),
+            "weather_code": getattr(current, "weathercode", None),
         }
-    
-    if air_quality and hasattr(air_quality, 'current'):
-        conditions["air_quality_aqi"] = getattr(air_quality.current, 'european_aqi', None)
-    
+
+    if air_quality and hasattr(air_quality, "current"):
+        conditions["air_quality_aqi"] = getattr(
+            air_quality.current, "european_aqi", None
+        )
+
     # Prioritized recommendations
     priority_recommendations = []
     warning_alerts = [a for a in alerts if a["severity"] == "warning"]
     if warning_alerts:
-        priority_recommendations.append("WARNING conditions present - review all active alerts")
-    
-    watch_alerts = [a for a in alerts if a["severity"] == "watch"] 
+        priority_recommendations.append(
+            "WARNING conditions present - review all active alerts"
+        )
+
+    watch_alerts = [a for a in alerts if a["severity"] == "watch"]
     if watch_alerts:
-        priority_recommendations.append("WATCH conditions developing - monitor forecast updates")
-    
+        priority_recommendations.append(
+            "WATCH conditions developing - monitor forecast updates"
+        )
+
     if not alerts:
-        priority_recommendations.append("No weather alerts - conditions are within normal ranges")
-    
+        priority_recommendations.append(
+            "No weather alerts - conditions are within normal ranges"
+        )
+
     return {
         "alerts": alerts,
         "summary": {
@@ -1018,10 +1042,10 @@ async def get_weather_alerts(
             "by_type": alert_counts,
             "by_severity": severity_counts,
             "analysis_period_hours": forecast_hours,
-            "timestamp": current_time.isoformat()
+            "timestamp": current_time.isoformat(),
         },
         "conditions": conditions,
-        "recommendations": priority_recommendations
+        "recommendations": priority_recommendations,
     }
 
 
@@ -1029,18 +1053,19 @@ async def get_weather_alerts(
 # RESOURCES
 # ============================================================================
 
+
 @mcp.resource("weather://codes")
 async def weather_codes() -> str:
     """
     Provides WMO weather code reference with descriptions, categories, and travel impact.
-    
+
     Use this to interpret weather_code values returned by weather tools.
     Contains 28 weather codes with:
     - Description (e.g., "Clear sky", "Moderate rain")
     - Category (Clear, Cloudy, Rain, Snow, Fog, Thunderstorm)
     - Icon suggestions
     - Travel impact assessments
-    
+
     Returns:
         JSON string with complete weather code reference data including
         descriptions, categories, and impact assessments for all 28 WMO codes.
@@ -1049,22 +1074,19 @@ async def weather_codes() -> str:
     return data_path.read_text(encoding="utf-8")
 
 
-
-
-
 @mcp.resource("weather://parameters")
 async def weather_parameters() -> str:
     """
     Provides available weather and snow parameters from Open-Meteo API.
-    
+
     Documents all available parameters for:
     - Hourly weather data
     - Daily weather data
     - Snow conditions
     - Units and descriptions
-    
+
     Use this to understand what data is available from the API.
-    
+
     Returns:
         JSON string documenting all available weather and snow parameters,
         their units, and descriptions for API queries.
@@ -1077,16 +1099,16 @@ async def weather_parameters() -> str:
 async def swiss_locations() -> str:
     """
     Provides popular Swiss locations with coordinates (cities, mountains, passes, lakes).
-    
+
     Quick reference for common Swiss destinations including:
     - Major cities: Zurich, Geneva, Bern, Basel, Lausanne, Lucerne, etc.
     - Mountains: Matterhorn, Eiger, Jungfrau, Pilatus, Rigi
     - Mountain passes: Gotthard, Simplon, Furka, Grimsel
     - Lakes: Geneva, Zurich, Lucerne, Constance, Maggiore
-    
+
     Each location includes coordinates, elevation, and description.
     Use this for quick lookups or combine with search_location tool for more options.
-    
+
     Returns:
         JSON string with Swiss location data including coordinates, elevations,
         and descriptions for cities, mountains, passes, and lakes.
@@ -1099,22 +1121,22 @@ async def swiss_locations() -> str:
 async def aqi_reference() -> str:
     """
     Provides Air Quality Index (AQI) interpretation guide and health recommendations.
-    
+
     Comprehensive reference for understanding air quality measurements:
     - European AQI scale (0-100+) with 6 levels from Good to Extremely Poor
     - US AQI scale (0-500) with 6 levels from Good to Hazardous
     - UV Index scale (0-11+) with protection recommendations
     - Pollen concentration levels (Europe only)
-    
+
     Each level includes:
     - Numeric range
     - Color coding
     - Health implications
     - Cautionary statements for sensitive groups
     - Recommended actions
-    
+
     Use this to interpret air quality data from get_air_quality tool.
-    
+
     Returns:
         JSON string with complete AQI reference including European AQI, US AQI,
         UV Index scales, and health recommendations for each level.
@@ -1127,15 +1149,16 @@ async def aqi_reference() -> str:
 # PROMPTS
 # ============================================================================
 
+
 @mcp.prompt(name="meteo__ski-trip-weather")
 async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
     """
     Generates a guide for checking snow conditions and weather for ski trips to Swiss resorts.
-    
+
     Args:
         resort: Name of the Swiss ski resort (e.g., 'Zermatt', 'Verbier', 'St. Moritz')
         dates: Specific dates or time period (e.g., 'this weekend', 'next week', 'January 10-15')
-    
+
     Returns:
         Prompt template string instructing the LLM to check snow conditions,
         assess ski suitability, and provide recommendations for the specified
@@ -1190,18 +1213,16 @@ async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
 
 @mcp.prompt(name="meteo__plan-outdoor-activity")
 async def plan_outdoor_activity(
-    activity: str = "",
-    location: str = "",
-    timeframe: str = ""
+    activity: str = "", location: str = "", timeframe: str = ""
 ) -> str:
     """
     Generates a weather-aware outdoor activity planning workflow for hiking, cycling, and other outdoor pursuits.
-    
+
     Args:
         activity: Type of outdoor activity (e.g., 'hiking', 'cycling', 'climbing', 'camping')
         location: Location for the activity (city, mountain, trail name)
         timeframe: When planning to do the activity (e.g., 'this weekend', 'next week', specific dates)
-    
+
     Returns:
         Prompt template string instructing the LLM to assess weather suitability,
         identify optimal activity windows, and provide safety recommendations based
@@ -1258,18 +1279,16 @@ Weather sensitivity levels:
 
 @mcp.prompt(name="meteo__weather-aware-travel")
 async def weather_aware_travel(
-    destination: str = "",
-    travel_dates: str = "",
-    trip_type: str = ""
+    destination: str = "", travel_dates: str = "", trip_type: str = ""
 ) -> str:
     """
     Generates an integration pattern for combining weather forecasts with journey planning.
-    
+
     Args:
         destination: Travel destination (city, resort, or location name)
         travel_dates: When traveling (e.g., 'tomorrow', 'this weekend', 'January 10-15')
         trip_type: Type of trip (e.g., 'day trip', 'weekend getaway', 'ski trip', 'business travel')
-    
+
     Returns:
         Prompt template string instructing the LLM to integrate weather data with
         travel planning, provide packing recommendations, and assess weather impact
