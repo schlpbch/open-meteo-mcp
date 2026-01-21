@@ -1,6 +1,6 @@
 [project]
 name = "open-meteo-mcp"
-version = "3.0.0"
+version = "3.1.0"
 description = "MCP server providing weather and snow conditions via Open-Meteo API"
 requires-python = ">=3.11"
 dependencies = [
