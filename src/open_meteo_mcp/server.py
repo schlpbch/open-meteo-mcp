@@ -848,14 +848,18 @@ async def get_weather_alerts(
             # Check for wind chill
             wind_speed = getattr(current, "windspeed", 0)
             apparent_temp = temp - (wind_speed * 0.6)  # Simplified wind chill
+            # Determine cold alert severity based on apparent temperature
+            if apparent_temp < -15:
+                severity = "warning"
+            elif apparent_temp < -10:
+                severity = "watch"
+            else:
+                severity = "advisory"
+
             alerts.append(
                 {
                     "type": "cold",
-                    "severity": (
-                        "warning"
-                        if apparent_temp < -15
-                        else "watch" if apparent_temp < -10 else "advisory"
-                    ),
+                    "severity": severity,
                     "start": current_time.isoformat(),
                     "end": (current_time + timedelta(hours=6)).isoformat(),
                     "description": f"Cold temperature alert: {temp:.1f}°C (feels like {apparent_temp:.1f}°C)",
