@@ -94,10 +94,6 @@ htmlcov/
 .tox/
 .nox/
 
-# uv
-uv.lock
-.uv/
-
 # mypy
 .mypy_cache/
 .dmypy.json
