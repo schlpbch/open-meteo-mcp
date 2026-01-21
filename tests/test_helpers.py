@@ -1,6 +1,5 @@
 """Unit tests for helper functions."""
 
-import pytest
 
 from open_meteo_mcp.helpers import (
     interpret_weather_code,

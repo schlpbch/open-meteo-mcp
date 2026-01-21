@@ -6,17 +6,9 @@ and overall API improvements.
 """
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, patch, Mock
-from datetime import datetime, timedelta
+from unittest.mock import patch, Mock
+from datetime import datetime
 from src.open_meteo_mcp.client import OpenMeteoClient
-from src.open_meteo_mcp.models import (
-    WeatherForecast,
-    AirQualityForecast,
-    GeocodingResponse,
-    Location,
-    CurrentWeather,
-)
 
 
 class TestCountryFiltering:
@@ -297,7 +289,6 @@ class TestWeatherAlerts:
 
     def test_heat_alert_generation(self):
         """Test heat alert generation logic."""
-        from src.open_meteo_mcp.server import mcp
 
         # Simulate hot weather conditions
         current = {"temperature": 35.0, "windspeed": 5.0}

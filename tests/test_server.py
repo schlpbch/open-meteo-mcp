@@ -2,8 +2,6 @@
 
 import pytest
 import json
-from pathlib import Path
-from fastmcp import FastMCP
 from fastmcp.client import Client
 
 from open_meteo_mcp.server import mcp

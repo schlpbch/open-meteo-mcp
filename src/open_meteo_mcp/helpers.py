@@ -8,10 +8,10 @@ import pytz
 def interpret_weather_code(code: int) -> Dict[str, Any]:
     """
     Interpret WMO weather codes into human-readable descriptions.
-    
+
     Args:
         code: WMO weather code (0-99)
-    
+
     Returns:
         Dictionary with description, category, and severity
     """
@@ -21,10 +21,22 @@ def interpret_weather_code(code: int) -> Dict[str, Any]:
         2: {"description": "Partly cloudy", "category": "Cloudy", "severity": "low"},
         3: {"description": "Overcast", "category": "Cloudy", "severity": "low"},
         45: {"description": "Fog", "category": "Fog", "severity": "medium"},
-        48: {"description": "Depositing rime fog", "category": "Fog", "severity": "medium"},
+        48: {
+            "description": "Depositing rime fog",
+            "category": "Fog",
+            "severity": "medium",
+        },
         51: {"description": "Light drizzle", "category": "Drizzle", "severity": "low"},
-        53: {"description": "Moderate drizzle", "category": "Drizzle", "severity": "low"},
-        55: {"description": "Dense drizzle", "category": "Drizzle", "severity": "medium"},
+        53: {
+            "description": "Moderate drizzle",
+            "category": "Drizzle",
+            "severity": "low",
+        },
+        55: {
+            "description": "Dense drizzle",
+            "category": "Drizzle",
+            "severity": "medium",
+        },
         61: {"description": "Slight rain", "category": "Rain", "severity": "low"},
         63: {"description": "Moderate rain", "category": "Rain", "severity": "medium"},
         65: {"description": "Heavy rain", "category": "Rain", "severity": "high"},
@@ -32,30 +44,65 @@ def interpret_weather_code(code: int) -> Dict[str, Any]:
         73: {"description": "Moderate snow", "category": "Snow", "severity": "medium"},
         75: {"description": "Heavy snow", "category": "Snow", "severity": "high"},
         77: {"description": "Snow grains", "category": "Snow", "severity": "medium"},
-        80: {"description": "Slight rain showers", "category": "Rain", "severity": "low"},
-        81: {"description": "Moderate rain showers", "category": "Rain", "severity": "medium"},
-        82: {"description": "Violent rain showers", "category": "Rain", "severity": "high"},
-        85: {"description": "Slight snow showers", "category": "Snow", "severity": "low"},
-        86: {"description": "Heavy snow showers", "category": "Snow", "severity": "high"},
-        95: {"description": "Thunderstorm", "category": "Thunderstorm", "severity": "high"},
-        96: {"description": "Thunderstorm with slight hail", "category": "Thunderstorm", "severity": "high"},
-        99: {"description": "Thunderstorm with heavy hail", "category": "Thunderstorm", "severity": "extreme"},
+        80: {
+            "description": "Slight rain showers",
+            "category": "Rain",
+            "severity": "low",
+        },
+        81: {
+            "description": "Moderate rain showers",
+            "category": "Rain",
+            "severity": "medium",
+        },
+        82: {
+            "description": "Violent rain showers",
+            "category": "Rain",
+            "severity": "high",
+        },
+        85: {
+            "description": "Slight snow showers",
+            "category": "Snow",
+            "severity": "low",
+        },
+        86: {
+            "description": "Heavy snow showers",
+            "category": "Snow",
+            "severity": "high",
+        },
+        95: {
+            "description": "Thunderstorm",
+            "category": "Thunderstorm",
+            "severity": "high",
+        },
+        96: {
+            "description": "Thunderstorm with slight hail",
+            "category": "Thunderstorm",
+            "severity": "high",
+        },
+        99: {
+            "description": "Thunderstorm with heavy hail",
+            "category": "Thunderstorm",
+            "severity": "extreme",
+        },
     }
-    
-    return weather_codes.get(code, {
-        "description": f"Unknown weather code: {code}",
-        "category": "Unknown",
-        "severity": "unknown"
-    })
+
+    return weather_codes.get(
+        code,
+        {
+            "description": f"Unknown weather code: {code}",
+            "category": "Unknown",
+            "severity": "unknown",
+        },
+    )
 
 
 def get_weather_category(code: int) -> str:
     """
     Get the weather category for a WMO code.
-    
+
     Args:
         code: WMO weather code
-    
+
     Returns:
         Weather category (Clear, Cloudy, Rain, Snow, etc.)
     """
@@ -65,34 +112,36 @@ def get_weather_category(code: int) -> str:
 def get_travel_impact(code: int) -> str:
     """
     Assess travel impact based on weather code.
-    
+
     Args:
         code: WMO weather code
-    
+
     Returns:
         Travel impact level (none, minor, moderate, significant, severe)
     """
     severity = interpret_weather_code(code)["severity"]
-    
+
     impact_map = {
         "none": "none",
         "low": "minor",
         "medium": "moderate",
         "high": "significant",
-        "extreme": "severe"
+        "extreme": "severe",
     }
-    
+
     return impact_map.get(severity, "unknown")
 
 
-def assess_ski_conditions(snow_data: Dict[str, Any], weather_data: Dict[str, Any]) -> str:
+def assess_ski_conditions(
+    snow_data: Dict[str, Any], weather_data: Dict[str, Any]
+) -> str:
     """
     Assess ski conditions based on snow depth, snowfall, and weather.
-    
+
     Args:
         snow_data: Snow conditions data (depth, snowfall, etc.)
         weather_data: Weather data (temperature, weather code, etc.)
-    
+
     Returns:
         Ski condition assessment (Excellent, Good, Fair, Poor)
     """
@@ -101,7 +150,7 @@ def assess_ski_conditions(snow_data: Dict[str, Any], weather_data: Dict[str, Any
     recent_snowfall = snow_data.get("recent_snowfall", 0)
     temperature = weather_data.get("temperature", 0)
     weather_code = weather_data.get("weather_code", 0)
-    
+
     # Assess conditions
     if recent_snowfall > 10 and -15 <= temperature <= -5 and weather_code in [0, 1, 2]:
         return "Excellent"
@@ -116,10 +165,10 @@ def assess_ski_conditions(snow_data: Dict[str, Any], weather_data: Dict[str, Any
 def format_temperature(celsius: float) -> str:
     """
     Format temperature with unit.
-    
+
     Args:
         celsius: Temperature in Celsius
-    
+
     Returns:
         Formatted temperature string (e.g., "15.2°C")
     """
@@ -129,58 +178,74 @@ def format_temperature(celsius: float) -> str:
 def calculate_wind_chill(temp: float, wind: float) -> float:
     """
     Calculate wind chill temperature.
-    
+
     Uses the North American wind chill formula.
-    
+
     Args:
         temp: Air temperature in Celsius
         wind: Wind speed in km/h
-    
+
     Returns:
         Wind chill temperature in Celsius
     """
     if wind < 4.8:  # Wind chill only applies above ~5 km/h
         return temp
-    
+
     # Convert to Fahrenheit for calculation
-    temp_f = temp * 9/5 + 32
+    temp_f = temp * 9 / 5 + 32
     wind_mph = wind * 0.621371
-    
+
     # Wind chill formula (Fahrenheit)
     wind_chill_f = (
-        35.74 + 
-        0.6215 * temp_f - 
-        35.75 * (wind_mph ** 0.16) + 
-        0.4275 * temp_f * (wind_mph ** 0.16)
+        35.74
+        + 0.6215 * temp_f
+        - 35.75 * (wind_mph**0.16)
+        + 0.4275 * temp_f * (wind_mph**0.16)
     )
-    
+
     # Convert back to Celsius
-    wind_chill_c = (wind_chill_f - 32) * 5/9
-    
+    wind_chill_c = (wind_chill_f - 32) * 5 / 9
+
     return round(wind_chill_c, 1)
 
 
 def get_seasonal_advice(month: int) -> str:
     """
     Get seasonal advice for outdoor activities.
-    
+
     Args:
         month: Month number (1-12)
-    
+
     Returns:
         Seasonal advice string
     """
     seasons = {
-        (12, 1, 2): "Winter: Ideal for skiing and snow sports. Dress warmly and check avalanche warnings.",
-        (3, 4, 5): "Spring: Variable conditions. Snow melting at lower elevations. Good for hiking as weather improves.",
-        (6, 7, 8): "Summer: Best for hiking, climbing, and outdoor activities. Watch for afternoon thunderstorms in mountains.",
-        (9, 10, 11): "Autumn: Beautiful colors, but weather becoming unpredictable. Early snow possible at high elevations."
+        (
+            12,
+            1,
+            2,
+        ): "Winter: Ideal for skiing and snow sports. Dress warmly and check avalanche warnings.",
+        (
+            3,
+            4,
+            5,
+        ): "Spring: Variable conditions. Snow melting at lower elevations. Good for hiking as weather improves.",
+        (
+            6,
+            7,
+            8,
+        ): "Summer: Best for hiking, climbing, and outdoor activities. Watch for afternoon thunderstorms in mountains.",
+        (
+            9,
+            10,
+            11,
+        ): "Autumn: Beautiful colors, but weather becoming unpredictable. Early snow possible at high elevations.",
     }
-    
+
     for months, advice in seasons.items():
         if month in months:
             return advice
-    
+
     return "Check current conditions before outdoor activities."
 
 
@@ -206,7 +271,12 @@ def format_precipitation(mm: float) -> str:
         return f"{mm:.1f}mm (very heavy)"
 
 
-def generate_weather_alerts(current: Dict[str, Any], hourly: Dict[str, Any], daily: Dict[str, Any], timezone: str) -> list:
+def generate_weather_alerts(
+    current: Dict[str, Any],
+    hourly: Dict[str, Any],
+    daily: Dict[str, Any],
+    timezone: str,
+) -> list:
     """
     Generate weather alerts based on thresholds.
 
@@ -219,7 +289,7 @@ def generate_weather_alerts(current: Dict[str, Any], hourly: Dict[str, Any], dai
     Returns:
         List of WeatherAlert dictionaries
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     alerts = []
 
@@ -229,8 +299,6 @@ def generate_weather_alerts(current: Dict[str, Any], hourly: Dict[str, Any], dai
     try:
         # Extract data safely
         current_temp = current.get("temperature", 20)
-        current_wind = current.get("windspeed", 0)
-        current_weather_code = current.get("weathercode", 0)
 
         # Get hourly and daily temperatures
         hourly_temps = hourly.get("temperature_2m", [])
@@ -238,100 +306,164 @@ def generate_weather_alerts(current: Dict[str, Any], hourly: Dict[str, Any], dai
         hourly_uvs = hourly.get("uv_index", [])
         hourly_times = hourly.get("time", [])
 
-        daily_temps_max = daily.get("temperature_2m_max", [])
-        daily_temps_min = daily.get("temperature_2m_min", [])
-        daily_precip = daily.get("precipitation_sum", [])
-        daily_times = daily.get("time", [])
         daily_codes = daily.get("weather_code", [])
 
         # HEAT ALERT (temp > 30°C for 3+ consecutive hours)
         if hourly_temps:
             heat_hours = sum(1 for t in hourly_temps[:24] if t > 30)
             if heat_hours >= 3:
-                alerts.append({
-                    "type": "heat",
-                    "severity": "watch" if heat_hours < 6 else "warning",
-                    "start": hourly_times[0] if hourly_times else datetime.now().isoformat(),
-                    "end": hourly_times[min(24, heat_hours)] if hourly_times else (datetime.now() + timedelta(hours=6)).isoformat(),
-                    "description": f"High temperature alert: {heat_hours} hours above 30°C expected",
-                    "recommendations": [
-                        "Limit outdoor activities during peak heat (11am-4pm)",
-                        "Increase hydration significantly",
-                        "Check on elderly and vulnerable populations",
-                        "Seek air-conditioned spaces during hottest hours"
-                    ]
-                })
+                alerts.append(
+                    {
+                        "type": "heat",
+                        "severity": "watch" if heat_hours < 6 else "warning",
+                        "start": (
+                            hourly_times[0]
+                            if hourly_times
+                            else datetime.now().isoformat()
+                        ),
+                        "end": (
+                            hourly_times[min(24, heat_hours)]
+                            if hourly_times
+                            else (datetime.now() + timedelta(hours=6)).isoformat()
+                        ),
+                        "description": f"High temperature alert: {heat_hours} hours above 30°C expected",
+                        "recommendations": [
+                            "Limit outdoor activities during peak heat (11am-4pm)",
+                            "Increase hydration significantly",
+                            "Check on elderly and vulnerable populations",
+                            "Seek air-conditioned spaces during hottest hours",
+                        ],
+                    }
+                )
 
         # COLD ALERT (temp < -10°C)
         if current_temp < -10 or any(t < -10 for t in hourly_temps[:24]):
-            alerts.append({
-                "type": "cold",
-                "severity": "watch" if current_temp > -20 else "warning",
-                "start": hourly_times[0] if hourly_times else datetime.now().isoformat(),
-                "end": hourly_times[min(12, len(hourly_times)-1)] if hourly_times else (datetime.now() + timedelta(hours=12)).isoformat(),
-                "description": f"Extreme cold alert: temperatures below -10°C expected",
-                "recommendations": [
-                    "Avoid prolonged outdoor exposure",
-                    "Wear appropriate winter gear",
-                    "Watch for signs of frostbite and hypothermia",
-                    "Check heating systems are functioning"
-                ]
-            })
+            alerts.append(
+                {
+                    "type": "cold",
+                    "severity": "watch" if current_temp > -20 else "warning",
+                    "start": (
+                        hourly_times[0] if hourly_times else datetime.now().isoformat()
+                    ),
+                    "end": (
+                        hourly_times[min(12, len(hourly_times) - 1)]
+                        if hourly_times
+                        else (datetime.now() + timedelta(hours=12)).isoformat()
+                    ),
+                    "description": "Extreme cold alert: temperatures below -10°C expected",
+                    "recommendations": [
+                        "Avoid prolonged outdoor exposure",
+                        "Wear appropriate winter gear",
+                        "Watch for signs of frostbite and hypothermia",
+                        "Check heating systems are functioning",
+                    ],
+                }
+            )
 
         # STORM ALERT (wind gusts > 80 km/h OR thunderstorm codes 95-99)
-        high_wind_hours = [i for i, w in enumerate(hourly_winds) if w and w > 80] if hourly_winds else []
+        high_wind_hours = (
+            [i for i, w in enumerate(hourly_winds) if w and w > 80]
+            if hourly_winds
+            else []
+        )
         thunderstorm_codes = [code for code in daily_codes if code in [95, 96, 99]]
 
         if high_wind_hours or thunderstorm_codes:
-            alerts.append({
-                "type": "storm",
-                "severity": "warning" if high_wind_hours or thunderstorm_codes else "advisory",
-                "start": hourly_times[high_wind_hours[0]] if high_wind_hours and hourly_times else datetime.now().isoformat(),
-                "end": hourly_times[min(high_wind_hours[-1] + 2, len(hourly_times)-1)] if high_wind_hours and hourly_times else (datetime.now() + timedelta(hours=4)).isoformat(),
-                "description": f"Storm warning: strong winds (>80 km/h) or thunderstorms expected",
-                "recommendations": [
-                    "Avoid outdoor activities in exposed areas",
-                    "Secure loose outdoor items",
-                    "Monitor for flash flooding",
-                    "Keep emergency contacts and supplies ready"
-                ]
-            })
+            alerts.append(
+                {
+                    "type": "storm",
+                    "severity": (
+                        "warning"
+                        if high_wind_hours or thunderstorm_codes
+                        else "advisory"
+                    ),
+                    "start": (
+                        hourly_times[high_wind_hours[0]]
+                        if high_wind_hours and hourly_times
+                        else datetime.now().isoformat()
+                    ),
+                    "end": (
+                        hourly_times[
+                            min(high_wind_hours[-1] + 2, len(hourly_times) - 1)
+                        ]
+                        if high_wind_hours and hourly_times
+                        else (datetime.now() + timedelta(hours=4)).isoformat()
+                    ),
+                    "description": "Storm warning: strong winds (>80 km/h) or thunderstorms expected",
+                    "recommendations": [
+                        "Avoid outdoor activities in exposed areas",
+                        "Secure loose outdoor items",
+                        "Monitor for flash flooding",
+                        "Keep emergency contacts and supplies ready",
+                    ],
+                }
+            )
 
         # UV ALERT (UV index > 8)
-        high_uv_hours = [i for i, uv in enumerate(hourly_uvs) if uv and uv > 8] if hourly_uvs else []
+        high_uv_hours = (
+            [i for i, uv in enumerate(hourly_uvs) if uv and uv > 8]
+            if hourly_uvs
+            else []
+        )
         if high_uv_hours:
-            alerts.append({
-                "type": "uv",
-                "severity": "advisory",
-                "start": hourly_times[high_uv_hours[0]] if hourly_times else datetime.now().isoformat(),
-                "end": hourly_times[min(high_uv_hours[-1] + 1, len(hourly_times)-1)] if hourly_times else (datetime.now() + timedelta(hours=3)).isoformat(),
-                "description": f"Extreme UV alert: UV index above 8 expected",
-                "recommendations": [
-                    "Apply high SPF sunscreen (SPF 50+) every 2 hours",
-                    "Seek shade during peak UV hours (10am-4pm)",
-                    "Wear UV-protective clothing, hat, and sunglasses",
-                    "Avoid direct sun exposure for sensitive individuals"
-                ]
-            })
+            alerts.append(
+                {
+                    "type": "uv",
+                    "severity": "advisory",
+                    "start": (
+                        hourly_times[high_uv_hours[0]]
+                        if hourly_times
+                        else datetime.now().isoformat()
+                    ),
+                    "end": (
+                        hourly_times[min(high_uv_hours[-1] + 1, len(hourly_times) - 1)]
+                        if hourly_times
+                        else (datetime.now() + timedelta(hours=3)).isoformat()
+                    ),
+                    "description": "Extreme UV alert: UV index above 8 expected",
+                    "recommendations": [
+                        "Apply high SPF sunscreen (SPF 50+) every 2 hours",
+                        "Seek shade during peak UV hours (10am-4pm)",
+                        "Wear UV-protective clothing, hat, and sunglasses",
+                        "Avoid direct sun exposure for sensitive individuals",
+                    ],
+                }
+            )
 
         # HIGH WIND ALERT (gusts > 50 km/h but < 80)
-        moderate_wind_hours = [i for i, w in enumerate(hourly_winds) if w and 50 < w <= 80] if hourly_winds else []
+        moderate_wind_hours = (
+            [i for i, w in enumerate(hourly_winds) if w and 50 < w <= 80]
+            if hourly_winds
+            else []
+        )
         if moderate_wind_hours and not high_wind_hours:  # Only if no storm alert
-            alerts.append({
-                "type": "wind",
-                "severity": "advisory",
-                "start": hourly_times[moderate_wind_hours[0]] if hourly_times else datetime.now().isoformat(),
-                "end": hourly_times[min(moderate_wind_hours[-1] + 1, len(hourly_times)-1)] if hourly_times else (datetime.now() + timedelta(hours=2)).isoformat(),
-                "description": f"High wind advisory: gusts 50-80 km/h expected",
-                "recommendations": [
-                    "Be cautious in exposed areas",
-                    "Check forecasts before outdoor activities",
-                    "Secure loose items",
-                    "Safe for most outdoor activities with caution"
-                ]
-            })
+            alerts.append(
+                {
+                    "type": "wind",
+                    "severity": "advisory",
+                    "start": (
+                        hourly_times[moderate_wind_hours[0]]
+                        if hourly_times
+                        else datetime.now().isoformat()
+                    ),
+                    "end": (
+                        hourly_times[
+                            min(moderate_wind_hours[-1] + 1, len(hourly_times) - 1)
+                        ]
+                        if hourly_times
+                        else (datetime.now() + timedelta(hours=2)).isoformat()
+                    ),
+                    "description": "High wind advisory: gusts 50-80 km/h expected",
+                    "recommendations": [
+                        "Be cautious in exposed areas",
+                        "Check forecasts before outdoor activities",
+                        "Secure loose items",
+                        "Safe for most outdoor activities with caution",
+                    ],
+                }
+            )
 
-    except Exception as e:
+    except Exception:
         # Log error but don't fail the entire function
         pass
 
@@ -339,8 +471,7 @@ def generate_weather_alerts(current: Dict[str, Any], hourly: Dict[str, Any], dai
 
 
 def normalize_timezone(
-    response_data: Dict[str, Any],
-    target_timezone: str = "UTC"
+    response_data: Dict[str, Any], target_timezone: str = "UTC"
 ) -> Dict[str, Any]:
     """
     Normalize all timestamps in a weather/air quality response to a specified timezone.
@@ -358,13 +489,13 @@ def normalize_timezone(
         # Get source timezone
         try:
             source_tz = pytz.timezone(source_tz_str)
-        except:
+        except (pytz.UnknownTimeZoneError, KeyError, AttributeError):
             source_tz = pytz.UTC
 
         # Get target timezone
         try:
             target_tz = pytz.timezone(target_timezone)
-        except:
+        except (pytz.UnknownTimeZoneError, KeyError, AttributeError):
             target_tz = pytz.UTC
 
         # Convert hourly timestamps if present
@@ -375,13 +506,13 @@ def normalize_timezone(
                 for time_str in hourly["time"]:
                     try:
                         # Parse ISO format timestamp
-                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
                         if dt.tzinfo is None:
                             dt = source_tz.localize(dt)
                         # Convert to target timezone
                         dt_converted = dt.astimezone(target_tz)
                         converted_times.append(dt_converted.isoformat())
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         converted_times.append(time_str)
                 hourly["time"] = converted_times
 
@@ -392,12 +523,12 @@ def normalize_timezone(
                 converted_times = []
                 for time_str in daily["time"]:
                     try:
-                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
                         if dt.tzinfo is None:
                             dt = source_tz.localize(dt)
                         dt_converted = dt.astimezone(target_tz)
                         converted_times.append(dt_converted.isoformat())
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         converted_times.append(time_str)
                 daily["time"] = converted_times
 
@@ -406,14 +537,13 @@ def normalize_timezone(
 
         return response_data
 
-    except Exception as e:
+    except Exception:
         # If normalization fails, return original data
         return response_data
 
 
 def normalize_air_quality_timezone(
-    air_quality_data: Dict[str, Any],
-    weather_timezone: str = "UTC"
+    air_quality_data: Dict[str, Any], weather_timezone: str = "UTC"
 ) -> Dict[str, Any]:
     """
     Normalize air quality timestamps to match weather timezone.
@@ -435,24 +565,26 @@ def normalize_air_quality_timezone(
         # Get target timezone
         try:
             target_tz = pytz.timezone(weather_timezone)
-        except:
+        except (pytz.UnknownTimeZoneError, KeyError, AttributeError):
             target_tz = pytz.UTC
 
         # Convert hourly timestamps if present
-        if "hourly" in air_quality_data and isinstance(air_quality_data["hourly"], dict):
+        if "hourly" in air_quality_data and isinstance(
+            air_quality_data["hourly"], dict
+        ):
             hourly = air_quality_data["hourly"]
             if "time" in hourly and isinstance(hourly["time"], list):
                 converted_times = []
                 for time_str in hourly["time"]:
                     try:
                         # Parse ISO format timestamp (should be UTC)
-                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
                         if dt.tzinfo is None:
                             dt = utc_tz.localize(dt)
                         # Convert to target timezone
                         dt_converted = dt.astimezone(target_tz)
                         converted_times.append(dt_converted.isoformat())
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         converted_times.append(time_str)
                 hourly["time"] = converted_times
 
@@ -461,14 +593,12 @@ def normalize_air_quality_timezone(
 
         return air_quality_data
 
-    except Exception as e:
+    except Exception:
         return air_quality_data
 
 
 def calculate_astronomy_data(
-    latitude: float,
-    longitude: float,
-    timezone: str = "UTC"
+    latitude: float, longitude: float, timezone: str = "UTC"
 ) -> Dict[str, Any]:
     """
     Calculate astronomical data for a location.
@@ -492,13 +622,12 @@ def calculate_astronomy_data(
         # Get timezone object
         try:
             tz = pytz.timezone(timezone)
-        except:
+        except (pytz.UnknownTimeZoneError, KeyError, AttributeError):
             tz = pytz.UTC
 
         # Calculate sunrise and sunset using a simple approximation
         # This uses a standard formula for sunrise/sunset calculation
         lat_rad = math.radians(latitude)
-        lon_rad = math.radians(longitude)
 
         # Day of year
         day_of_year = today.timetuple().tm_yday
@@ -510,11 +639,16 @@ def calculate_astronomy_data(
         M_rad = math.radians(M)
 
         # Equation of center
-        C = (1.9164 * math.sin(M_rad) + 0.02 * math.sin(2 * M_rad) +
-             0.0029 * math.sin(3 * M_rad))
+        C = (
+            1.9164 * math.sin(M_rad)
+            + 0.02 * math.sin(2 * M_rad)
+            + 0.0029 * math.sin(3 * M_rad)
+        )
 
         # Ecliptic longitude
-        lambda_sun = (280.4665 + 36000.76983 * (J / 36525) + 0.0003025 * ((J / 36525) ** 2)) % 360
+        lambda_sun = (
+            280.4665 + 36000.76983 * (J / 36525) + 0.0003025 * ((J / 36525) ** 2)
+        ) % 360
         lambda_sun = (lambda_sun + C) % 360
         lambda_sun_rad = math.radians(lambda_sun)
 
@@ -527,7 +661,7 @@ def calculate_astronomy_data(
         h = math.degrees(math.acos(cos_h))
 
         # UTC times
-        utc_offset = (longitude / 15)
+        utc_offset = longitude / 15
         sunrise_utc = 12 - h / 15 - utc_offset
         sunset_utc = 12 + h / 15 - utc_offset
 
@@ -554,29 +688,35 @@ def calculate_astronomy_data(
             "golden_hour": {
                 "start": golden_hour_start.isoformat(),
                 "end": golden_hour_end.isoformat(),
-                "duration_minutes": 30
+                "duration_minutes": 30,
             },
             "blue_hour": {
                 "start": blue_hour_start.isoformat(),
                 "end": blue_hour_end.isoformat(),
-                "duration_minutes": 40
+                "duration_minutes": 40,
             },
             "moon_phase": "waxing gibbous",  # Simplified; would need lunar calculations
             "best_photography_windows": [
-                {"type": "golden_hour", "start": golden_hour_start.isoformat(), "end": golden_hour_end.isoformat()},
-                {"type": "blue_hour", "start": blue_hour_start.isoformat(), "end": blue_hour_end.isoformat()}
-            ]
+                {
+                    "type": "golden_hour",
+                    "start": golden_hour_start.isoformat(),
+                    "end": golden_hour_end.isoformat(),
+                },
+                {
+                    "type": "blue_hour",
+                    "start": blue_hour_start.isoformat(),
+                    "end": blue_hour_end.isoformat(),
+                },
+            ],
         }
 
     except Exception as e:
-        return {
-            "sunrise": None,
-            "sunset": None,
-            "error": str(e)
-        }
+        return {"sunrise": None, "sunset": None, "error": str(e)}
 
 
-def calculate_comfort_index(weather: Dict[str, Any], air_quality: Dict[str, Any] = None) -> Dict[str, Any]:
+def calculate_comfort_index(
+    weather: Dict[str, Any], air_quality: Dict[str, Any] = None
+) -> Dict[str, Any]:
     """
     Calculate a comfort index for outdoor activities (0-100).
 
@@ -624,11 +764,11 @@ def calculate_comfort_index(weather: Dict[str, Any], air_quality: Dict[str, Any]
 
         # Calculate weighted overall comfort
         overall = (
-            thermal * 0.25 +
-            air_quality_factor * 0.15 +
-            precip_factor * 0.20 +
-            uv_factor * 0.15 +
-            weather_factor * 0.25
+            thermal * 0.25
+            + air_quality_factor * 0.15
+            + precip_factor * 0.20
+            + uv_factor * 0.15
+            + weather_factor * 0.25
         )
 
         # Determine recommendation
@@ -650,12 +790,12 @@ def calculate_comfort_index(weather: Dict[str, Any], air_quality: Dict[str, Any]
                 "air_quality": round(air_quality_factor, 1),
                 "precipitation_risk": round(precip_factor, 1),
                 "uv_safety": round(uv_factor, 1),
-                "weather_condition": round(weather_factor, 1)
+                "weather_condition": round(weather_factor, 1),
             },
-            "recommendation": recommendation
+            "recommendation": recommendation,
         }
 
-    except Exception as e:
+    except Exception:
         return {
             "overall": 50,
             "factors": {
@@ -663,7 +803,7 @@ def calculate_comfort_index(weather: Dict[str, Any], air_quality: Dict[str, Any]
                 "air_quality": 50,
                 "precipitation_risk": 50,
                 "uv_safety": 50,
-                "weather_condition": 50
+                "weather_condition": 50,
             },
-            "recommendation": "Unable to calculate comfort index"
+            "recommendation": "Unable to calculate comfort index",
         }
