@@ -1,7 +1,7 @@
 """Pydantic models for Open-Meteo API requests and responses."""
 
 from typing import Optional, List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from datetime import datetime
 
 
@@ -72,19 +72,20 @@ class SnowInput(BaseModel):
 class CurrentWeather(BaseModel):
     """Current weather conditions."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     temperature: float = Field(..., description="Temperature in °C")
     windspeed: float = Field(..., description="Wind speed in km/h")
     winddirection: int = Field(..., description="Wind direction in degrees")
     weathercode: int = Field(..., description="WMO weather code")
     time: str = Field(..., description="Timestamp of observation")
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Hourly Weather
 class HourlyWeather(BaseModel):
     """Hourly weather forecast data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(
         default_factory=list, description="Timestamps for each hour"
@@ -118,13 +119,12 @@ class HourlyWeather(BaseModel):
     uv_index: Optional[List[float]] = Field(None, description="UV index")
     is_day: Optional[List[int]] = Field(None, description="Day (1) or night (0)")
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Daily Weather
 class DailyWeather(BaseModel):
     """Daily weather forecast data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(default_factory=list, description="Dates for each day")
     temperature_2m_max: List[float] = Field(
@@ -155,13 +155,12 @@ class DailyWeather(BaseModel):
         None, description="Maximum wind gusts (km/h)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Weather Forecast
 class WeatherForecast(BaseModel):
     """Complete weather forecast response from Open-Meteo API."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
@@ -177,13 +176,12 @@ class WeatherForecast(BaseModel):
     hourly: Optional[HourlyWeather] = Field(None, description="Hourly forecast data")
     daily: Optional[DailyWeather] = Field(None, description="Daily forecast data")
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Hourly Snow
 class HourlySnow(BaseModel):
     """Hourly snow conditions data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(
         default_factory=list, description="Timestamps for each hour"
@@ -212,13 +210,12 @@ class HourlySnow(BaseModel):
         None, description="Precipitation probability (%)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Daily Snow
 class DailySnow(BaseModel):
     """Daily snow conditions data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(default_factory=list, description="Dates for each day")
     temperature_2m_max: List[float] = Field(
@@ -240,14 +237,13 @@ class DailySnow(BaseModel):
         None, description="Maximum wind gusts (km/h)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Snow Conditions
 # Response Models - Geocoding
 class GeocodingResult(BaseModel):
     """Single geocoding search result."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     id: Optional[int] = Field(None, description="Location ID")
     name: str = Field(..., description="Location name")
@@ -279,12 +275,11 @@ class GeocodingResult(BaseModel):
     admin3_id: Optional[int] = Field(None, description="Admin3 ID")
     admin4_id: Optional[int] = Field(None, description="Admin4 ID")
 
-    class Config:
-        populate_by_name = True
-
 
 class GeocodingResponse(BaseModel):
     """Response from geocoding search API."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     results: Optional[List[GeocodingResult]] = Field(
         None, description="List of matching locations"
@@ -293,13 +288,12 @@ class GeocodingResponse(BaseModel):
         None, description="API generation time in milliseconds"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Air Quality
 class CurrentAirQuality(BaseModel):
     """Current air quality conditions."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: Optional[str] = Field(None, description="Timestamp of observation")
     european_aqi: Optional[int] = Field(
@@ -312,12 +306,11 @@ class CurrentAirQuality(BaseModel):
     pm2_5: Optional[float] = Field(None, description="Particulate matter PM2.5 (μg/m³)")
     uv_index: Optional[float] = Field(None, description="UV index")
 
-    class Config:
-        populate_by_name = True
-
 
 class HourlyAirQuality(BaseModel):
     """Hourly air quality forecast data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(
         default_factory=list, description="Timestamps for each hour"
@@ -369,12 +362,11 @@ class HourlyAirQuality(BaseModel):
         None, description="Ragweed pollen (grains/m³)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 class AirQualityForecast(BaseModel):
     """Complete air quality forecast response from Open-Meteo API."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
@@ -391,13 +383,12 @@ class AirQualityForecast(BaseModel):
         None, description="Hourly air quality forecast"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Snow Conditions
 class SnowConditions(BaseModel):
     """Complete snow conditions response from Open-Meteo API."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
@@ -410,13 +401,12 @@ class SnowConditions(BaseModel):
     hourly: Optional[HourlySnow] = Field(None, description="Hourly snow data")
     daily: Optional[DailySnow] = Field(None, description="Daily snow data")
 
-    class Config:
-        populate_by_name = True
-
 
 # Response Models - Marine Conditions
 class HourlyMarine(BaseModel):
     """Hourly marine conditions data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(
         default_factory=list, description="Timestamps for each hour"
@@ -447,12 +437,11 @@ class HourlyMarine(BaseModel):
         None, description="Swell wave period (seconds)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 class DailyMarine(BaseModel):
     """Daily marine conditions data."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     time: List[str] = Field(default_factory=list, description="Dates for each day")
     wave_height_max: Optional[List[float]] = Field(
@@ -474,12 +463,11 @@ class DailyMarine(BaseModel):
         None, description="Maximum swell wave period (seconds)"
     )
 
-    class Config:
-        populate_by_name = True
-
 
 class MarineConditions(BaseModel):
     """Complete marine conditions response from Open-Meteo Marine API."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
@@ -491,9 +479,6 @@ class MarineConditions(BaseModel):
     utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
     hourly: Optional[HourlyMarine] = Field(None, description="Hourly marine data")
     daily: Optional[DailyMarine] = Field(None, description="Daily marine data")
-
-    class Config:
-        populate_by_name = True
 
 
 # Response Models - Weather Alerts
@@ -515,12 +500,11 @@ class WeatherAlert(BaseModel):
 class WeatherAlertsResponse(BaseModel):
     """Response containing weather alerts for a location."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
     timezone: str = Field(..., description="Timezone name")
     alerts: List[WeatherAlert] = Field(
         default_factory=list, description="List of active alerts"
     )
-
-    class Config:
-        populate_by_name = True
