@@ -2,7 +2,7 @@
 
 from typing import Dict, Any
 from datetime import datetime, timedelta
-import pytz
+import pytz  # type: ignore[import-untyped]
 
 
 def interpret_weather_code(code: int) -> Dict[str, Any]:
@@ -106,7 +106,9 @@ def get_weather_category(code: int) -> str:
     Returns:
         Weather category (Clear, Cloudy, Rain, Snow, etc.)
     """
-    return interpret_weather_code(code)["category"]
+    result = interpret_weather_code(code)["category"]
+    assert isinstance(result, str)
+    return result
 
 
 def get_travel_impact(code: int) -> str:
@@ -206,7 +208,9 @@ def calculate_wind_chill(temp: float, wind: float) -> float:
     # Convert back to Celsius
     wind_chill_c = (wind_chill_f - 32) * 5 / 9
 
-    return round(wind_chill_c, 1)
+    result = round(wind_chill_c, 1)
+    assert isinstance(result, float)
+    return result
 
 
 def get_seasonal_advice(month: int) -> str:
@@ -276,7 +280,7 @@ def generate_weather_alerts(
     hourly: Dict[str, Any],
     daily: Dict[str, Any],
     timezone: str,
-) -> list:
+) -> list[Dict[str, Any]]:
     """
     Generate weather alerts based on thresholds.
 
@@ -291,7 +295,7 @@ def generate_weather_alerts(
     """
     from datetime import datetime
 
-    alerts = []
+    alerts: list[Dict[str, Any]] = []
 
     if not current or not hourly or not daily:
         return alerts
@@ -715,7 +719,7 @@ def calculate_astronomy_data(
 
 
 def calculate_comfort_index(
-    weather: Dict[str, Any], air_quality: Dict[str, Any] = None
+    weather: Dict[str, Any], air_quality: Dict[str, Any] | None = None
 ) -> Dict[str, Any]:
     """
     Calculate a comfort index for outdoor activities (0-100).

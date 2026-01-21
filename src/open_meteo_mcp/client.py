@@ -78,7 +78,7 @@ class OpenMeteoClient:
         )
 
         # Build query parameters
-        params = {
+        params: dict[str, str | int | float | bool] = {
             "latitude": latitude,
             "longitude": longitude,
             "forecast_days": min(max(forecast_days, 1), 16),  # Clamp to 1-16
@@ -150,7 +150,7 @@ class OpenMeteoClient:
         )
 
         # Build query parameters
-        params = {
+        params: dict[str, str | int | float] = {
             "latitude": latitude,
             "longitude": longitude,
             "forecast_days": min(max(forecast_days, 1), 16),  # Clamp to 1-16
@@ -252,7 +252,7 @@ class OpenMeteoClient:
             )
 
         # Build query parameters
-        params = {
+        params: dict[str, str | int | float] = {
             "latitude": latitude,
             "longitude": longitude,
             "forecast_days": min(max(forecast_days, 1), 5),  # Clamp to 1-5
@@ -324,7 +324,7 @@ class OpenMeteoClient:
         )
 
         # Build query parameters
-        params = {
+        params: dict[str, str | int] = {
             "name": name,
             "count": min(max(count, 1), 100),  # Clamp to 1-100
             "language": language,
@@ -425,7 +425,7 @@ class OpenMeteoClient:
         )
 
         # Build query parameters
-        params = {
+        params: dict[str, str | float] = {
             "latitude": latitude,
             "longitude": longitude,
             "start_date": start_date,
@@ -502,7 +502,7 @@ class OpenMeteoClient:
 
         # Build query parameters
         marine_url = "https://marine-api.open-meteo.com/v1/marine"
-        params = {
+        params: dict[str, str | int | float] = {
             "latitude": latitude,
             "longitude": longitude,
             "forecast_days": min(max(forecast_days, 1), 16),
@@ -542,15 +542,15 @@ class OpenMeteoClient:
             self.logger.error("marine_api_unexpected_error", error=str(e))
             raise ValueError(f"Failed to parse marine data: {e}") from e
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client and release resources."""
         await self.client.aclose()
         self.logger.debug("client_closed")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "OpenMeteoClient":
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type, exc_val: BaseException, exc_tb: type) -> None:
         """Async context manager exit."""
         await self.close()
