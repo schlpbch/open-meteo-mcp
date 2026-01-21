@@ -203,7 +203,7 @@ class GeocodingResponse(BaseModel):
 class CurrentAirQuality(BaseModel):
     """Current air quality conditions."""
     
-    time: str = Field(..., description="Timestamp of observation")
+    time: Optional[str] = Field(None, description="Timestamp of observation")
     european_aqi: Optional[int] = Field(None, description="European Air Quality Index (0-100+)")
     us_aqi: Optional[int] = Field(None, description="United States Air Quality Index (0-500)")
     pm10: Optional[float] = Field(None, description="Particulate matter PM10 (μg/m³)")
