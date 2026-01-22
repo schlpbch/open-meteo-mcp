@@ -554,3 +554,12 @@ class OpenMeteoClient:
     async def __aexit__(self, exc_type: type, exc_val: BaseException, exc_tb: type) -> None:
         """Async context manager exit."""
         await self.close()
+
+    def __str__(self) -> str:
+        """String representation of client."""
+        return f"OpenMeteoClient(base_url={self.BASE_URL})"
+
+    def __repr__(self) -> str:
+        """Repr representation of client."""
+        timeout = self.client.timeout
+        return f"OpenMeteoClient(base_url={self.BASE_URL!r}, timeout={timeout}s)"
