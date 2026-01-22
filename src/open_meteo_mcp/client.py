@@ -1,8 +1,9 @@
 """Async HTTP client for Open-Meteo Weather API."""
 
 import httpx
+import json
 import structlog
-from typing import Optional
+from typing import Optional, Any
 from .models import (
     WeatherForecast,
     SnowConditions,
@@ -563,3 +564,21 @@ class OpenMeteoClient:
         """Repr representation of client."""
         timeout = self.client.timeout
         return f"OpenMeteoClient(base_url={self.BASE_URL!r}, timeout={timeout}s)"
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert client state to dictionary for JSON serialization."""
+        return {
+            "base_url": self.BASE_URL,
+            "timeout": float(self.client.timeout.total_seconds()) if hasattr(self.client.timeout, 'total_seconds') else self.client.timeout,
+        }
+
+    def to_json(self, **kwargs) -> str:
+        """Convert client state to compact JSON string.
+
+        Args:
+            **kwargs: Additional arguments for json.dumps (e.g., indent=2 for pretty print)
+
+        Returns:
+            JSON string representation of client state
+        """
+        return json.dumps(self.to_dict(), **kwargs)
