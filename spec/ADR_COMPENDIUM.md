@@ -1282,30 +1282,31 @@ async def get_weather(
 
 ---
 
-## ADR-015: Remove meteo__ Tool Prefix (Breaking Change)
+## ADR-015: Keep meteo__ Tool Prefix for Namespace Isolation
 
 **Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Development Standards
 
 ### [ADR-015] Decision
 
-Remove the `meteo__` prefix from all 11 MCP tool names in v4.0.0, aligning with Java v2.0.2 naming convention.
+Maintain the `meteo__` prefix on all 11 MCP tool names, providing explicit namespace isolation and avoiding breaking changes.
 
 **Rationale**:
 
-- **Consistency**: Match Java implementation (removed prefix in v2.0.2)
-- **Clarity**: Tools are cleaner without prefix in Claude Desktop UI
-- **Standards**: No prefix is more common in MCP ecosystem
-- **Naming Space**: FastMCP already namespaces tools, prefix redundant
-- **Semantic Versioning**: Breaking change warrants MAJOR version bump
+- **Namespace Isolation**: `meteo__` prefix clearly identifies weather domain tools
+- **No Breaking Changes**: Avoids MAJOR version bump, allows v4.0.0 as feature release
+- **Consistency**: Python implementation can differ from Java when justified
+- **User Expectations**: Existing Claude Desktop integrations continue working
+- **Clarity**: Prefix makes tool purpose explicit in MCP namespaces
 
-### [ADR-015] Breaking Changes
+### [ADR-015] Tool Naming
 
-**Before (v3.2.0)**:
+All 11 tools retain the `meteo__` prefix:
+
 ```
+meteo__search_location
 meteo__get_weather
 meteo__get_snow_conditions
 meteo__get_air_quality
-meteo__search_location
 meteo__get_weather_alerts
 meteo__get_comfort_index
 meteo__get_astronomy
@@ -1315,121 +1316,53 @@ meteo__get_historical_weather
 meteo__get_marine_conditions
 ```
 
-**After (v4.0.0)**:
-```
-get_weather
-get_snow_conditions
-get_air_quality
-search_location
-get_weather_alerts
-get_comfort_index
-get_astronomy
-search_location_swiss
-compare_locations
-get_historical_weather
-get_marine_conditions
-```
+**No changes** to tool names in v4.0.0 or future versions.
 
 ### [ADR-015] Migration Impact
 
 **Claude Desktop Users**:
-- ✅ Zero impact - Tool discovery is automatic
-- Claude Desktop will automatically discover new tool names
+- ✅ Zero impact - Tool names unchanged
+- Existing integrations continue working without modification
 
-**API Clients** (if any):
-- Tool names must be updated in code
-- See migration guide in docs/MIGRATION.md
+**API Clients**:
+- ✅ No updates required
+- Tool names remain stable across versions
 
 **MCP Clients**:
-- Automatic tool discovery - no code changes needed
-
-### [ADR-015] Migration Timeline
-
-```
-v3.2.0 (current)
-  ↓
-v4.0.0 (breaking change)
-  - Tool prefix removed
-  - Clear migration guide provided
-  - v3.x branch supported for 6 months
-  ↓
-v3.x EOL (after 6 months)
-```
-
-### [ADR-015] Migration Guide
-
-```markdown
-# Migration Guide: v3.x → v4.0.0
-
-## What Changed
-
-All MCP tool names no longer have the `meteo__` prefix.
-
-| v3.2.0 | v4.0.0 |
-|--------|--------|
-| meteo__get_weather | get_weather |
-| meteo__get_snow_conditions | get_snow_conditions |
-
-## For Claude Desktop Users
-
-**No action required.** Tool discovery is automatic.
-
-## For API Users
-
-Update tool names in your code:
-
-```python
-# Before (v3.x)
-result = await mcp.call_tool("meteo__get_weather", {
-    "latitude": 47.3769,
-    "longitude": 8.5417
-})
-
-# After (v4.0.0)
-result = await mcp.call_tool("get_weather", {
-    "latitude": 47.3769,
-    "longitude": 8.5417
-})
-```
-
-## Support Timeline
-
-- v4.0.0: New tool names (no prefix)
-- v3.2.0-v3.x: Maintained for 6 months (bugfixes only)
-- After 6 months: v3.x reaches EOL
-```
-
-### [ADR-015] Implementation Details
-
-**Files to Modify**:
-- `src/open_meteo_mcp/server.py` - Remove prefix from all @mcp.tool() decorators
-- Update all tool definitions
-- No changes needed to service layer or client
-
-**Example**:
-```python
-# Before (v3.2.0)
-@mcp.tool()
-async def meteo__get_weather(latitude: float, longitude: float) -> dict:
-    ...
-
-# After (v4.0.0)
-@mcp.tool()
-async def get_weather(latitude: float, longitude: float) -> dict:
-    ...
-```
+- ✅ No code changes needed
+- Tools continue to work as expected
 
 ### [ADR-015] Benefits
 
-- **Cleaner Namespace**: Tools are simpler in Claude Desktop
-- **Consistency**: Aligns with Java implementation
-- **Standards**: Follows MCP ecosystem conventions
-- **Future Proof**: No redundant namespacing
+- **Backward Compatibility**: No breaking changes, smooth upgrades
+- **Explicit Namespacing**: Clear domain identification in tool names
+- **User Continuity**: Existing workflows unaffected
+- **Version Flexibility**: v4.0.0 can be MINOR version (feature release)
+
+### [ADR-015] Divergence from Java
+
+The Python implementation intentionally differs from Java v2.0.2:
+
+| Aspect | Python v4.0.0 | Java v2.0.2 |
+|--------|---------------|-------------|
+| Tool Prefix | `meteo__*` (kept) | `*` (removed) |
+| Rationale | Namespace clarity | Cleaner naming |
+| Breaking Changes | None | Prefix removal is breaking |
+
+**Justification**: Each language/implementation can optimize for its ecosystem. Python benefits from explicit namespacing.
+
+### [ADR-015] Implementation
+
+**No code changes required for tool naming**:
+- Tools in `server.py` keep `meteo__` prefix
+- Service layer unchanged
+- REST API endpoints use service layer (no prefix duplication)
+- Chat API tool schemas reference tools by name
 
 ### [ADR-015] Related ADRs
 
 - [ADR-001](#adr-001-use-fastmcp-framework-for-mcp-protocol) - FastMCP tool definitions
-- [ADR-005](#adr-005-semantic-versioning-semver) - Semantic versioning for breaking changes
+- [ADR-005](#adr-005-semantic-versioning-semver) - Semantic versioning (no major bump needed)
 
 ---
 
