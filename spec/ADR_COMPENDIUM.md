@@ -1,6 +1,6 @@
 # Open Meteo MCP (Python) - Architecture Decision Records (ADR) Compendium
 
-**Document Version**: 1.0.0 **Last Updated**: 2026-02-04 **Total ADRs**: 11 (10 Accepted, 1 Proposed)
+**Document Version**: 2.0.0 **Last Updated**: 2026-02-04 **Total ADRs**: 15 (11 Accepted, 4 Proposed)
 
 **Related Documents**:
 - [README.md](../README.md) - User guide and installation
@@ -52,6 +52,13 @@
 
 - [ADR-011: FastMCP Cloud Deployment](#adr-011-fastmcp-cloud-deployment)
   🔄
+
+### v4.0.0 Features (Proposed)
+
+- [ADR-012: REST API with FastAPI](#adr-012-rest-api-with-fastapi) 🔄
+- [ADR-013: Simple Chat API with Anthropic SDK](#adr-013-simple-chat-api-with-anthropic-sdk) 🔄
+- [ADR-014: Service Layer Pattern for Python](#adr-014-service-layer-pattern-for-python) 🔄
+- [ADR-015: Remove meteo__ Tool Prefix (Breaking Change)](#adr-015-remove-meteo-tool-prefix-breaking-change) 🔄
 
 ---
 
@@ -948,9 +955,487 @@ deployment:
 
 ---
 
+## ADR-012: REST API with FastAPI
+
+**Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Deployment & Integration
+
+### [ADR-012] Decision
+
+Use **FastAPI** alongside FastMCP to provide HTTP/REST API endpoints alongside the MCP protocol server.
+
+**Rationale**:
+
+- **Separation of Concerns**: REST API for HTTP clients, MCP for AI assistants
+- **Industry Standard**: FastAPI is Python's best-in-class web framework with auto-generated OpenAPI
+- **Minimal Overhead**: Lightweight framework with zero-copy request validation
+- **Async Native**: Built on Starlette, fully async with native httpx integration
+- **Developer Experience**: Automatic interactive API documentation (Swagger/ReDoc)
+- **No Lock-in**: Can run alongside FastMCP without framework conflicts
+
+### [ADR-012] Endpoints
+
+```python
+# Tool endpoints (4 basic endpoints from Java REST API)
+GET  /api/tools/weather?latitude=47.3769&longitude=8.5417&forecast_days=7
+GET  /api/tools/snow-conditions?latitude=46.0&longitude=7.7
+GET  /api/tools/air-quality?latitude=47.3769&longitude=8.5417
+POST /api/tools/search-location (body: {"name": "Zurich"})
+
+# Health check
+GET  /api/health
+```
+
+### [ADR-012] Implementation Pattern
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="Open Meteo MCP",
+    version="4.0.0",
+    description="Weather, snow, and air quality API"
+)
+
+# Enable CORS for web clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+)
+
+# Include routers
+app.include_router(tools_router, prefix="/api/tools")
+app.include_router(chat_router, prefix="/api/chat")
+
+# Run both FastAPI and FastMCP on same server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8888)
+```
+
+### [ADR-012] Benefits
+
+- **Web Client Support**: Enable browser-based and mobile app integration
+- **Auto Documentation**: OpenAPI spec auto-generated and served at `/docs`
+- **Type Safety**: Request/response validation via Pydantic models
+- **Performance**: Minimal overhead, comparable to FastMCP
+- **Compatibility**: Works alongside FastMCP without conflicts
+
+### [ADR-012] Related ADRs
+
+- [ADR-001](#adr-001-use-fastmcp-framework-for-mcp-protocol) - FastMCP for MCP protocol
+- [ADR-002](#adr-002-pydantic-v2-for-data-models) - Pydantic for request/response validation
+- [ADR-014](#adr-014-service-layer-pattern-for-python) - Service layer used by REST endpoints
+
+---
+
+## ADR-013: Simple Chat API with Anthropic SDK
+
+**Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Deployment & Integration
+
+### [ADR-013] Decision
+
+Use **Anthropic SDK directly** (not LangChain) for a simple, lightweight Chat API with manual tool calling.
+
+**Rationale**:
+
+- **Simplicity**: Direct API calls without framework complexity
+- **Dependencies**: Minimal (~1 package vs 50+ with LangChain)
+- **Control**: Full control over tool calling logic and responses
+- **Performance**: No abstraction overhead
+- **Maintainability**: Easier to debug and understand
+- **Sufficient**: Meets feature parity requirements without over-engineering
+
+### [ADR-013] Excluded Alternatives
+
+| Alternative | Why Not |
+|-------------|---------|
+| LangChain | 50+ dependencies, complex abstraction, slower |
+| OpenAI SDK | Single provider, less feature-rich than Anthropic |
+| Custom HTTP | Too much boilerplate, loses SDK benefits |
+
+### [ADR-013] Tool Calling Flow
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic()
+
+# 1. Define tool schemas for Claude
+tools = [
+    {
+        "name": "get_weather",
+        "description": "Get weather forecast for coordinates",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "latitude": {"type": "number"},
+                "longitude": {"type": "number"},
+                "forecast_days": {"type": "integer", "default": 7}
+            },
+            "required": ["latitude", "longitude"]
+        }
+    },
+    # ... 10 more tools
+]
+
+# 2. Send user message with tools
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    tools=tools,
+    messages=[
+        {"role": "user", "content": "What's the weather in Zurich?"}
+    ]
+)
+
+# 3. Check for tool use
+if response.stop_reason == "tool_use":
+    for block in response.content:
+        if block.type == "tool_use":
+            # Execute our MCP tool
+            tool_name = block.name
+            tool_input = block.input
+
+            # Call our service layer
+            result = await execute_mcp_tool(tool_name, tool_input)
+
+            # Continue conversation with results
+            messages.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": json.dumps(result)
+                    }
+                ]
+            })
+```
+
+### [ADR-013] Session Management
+
+```python
+# Simple in-memory session storage
+sessions: dict[str, dict] = {}
+
+class ChatSession:
+    def __init__(self, session_id: str):
+        self.session_id = session_id
+        self.messages: list = []
+        self.created_at = datetime.now()
+        self.last_activity = datetime.now()
+
+    def add_message(self, role: str, content: str) -> None:
+        self.messages.append({"role": role, "content": content})
+        self.last_activity = datetime.now()
+
+    def get_conversation(self) -> list:
+        return self.messages[-10:]  # Return last 10 messages for context
+```
+
+### [ADR-013] Benefits
+
+- **Minimal Dependencies**: Only Anthropic SDK required
+- **Fast Implementation**: 2-3 weeks vs 4+ with LangChain
+- **Clear Logic**: Easy to understand tool calling flow
+- **Debugging**: Direct SDK calls make troubleshooting straightforward
+- **Future Ready**: Can upgrade to LangChain in v4.1.0 if needed
+
+### [ADR-013] Limitations (Acceptable for v4.0.0)
+
+- No Redis-backed memory (in-memory only)
+- No multi-provider LLM support (Anthropic only)
+- No RAG/vector search (simple keyword matching could be added later)
+- No streaming responses (batch responses only)
+- No conversation summarization for long sessions
+
+### [ADR-013] Future Enhancements (v4.1.0+)
+
+- Upgrade to LangChain for multi-provider support
+- Add Redis for distributed session storage
+- Implement vector store for RAG
+- Add SSE streaming responses
+- Conversation summarization for context window management
+
+### [ADR-013] Related ADRs
+
+- [ADR-003](#adr-003-asyncawait-with-httpx-for-api-calls) - Async patterns
+- [ADR-012](#adr-012-rest-api-with-fastapi) - FastAPI endpoints for chat
+- [ADR-014](#adr-014-service-layer-pattern-for-python) - Service layer for tool execution
+
+---
+
+## ADR-014: Service Layer Pattern for Python
+
+**Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Core Architecture
+
+### [ADR-014] Decision
+
+Introduce a **service layer** between tools/routes and the API client, providing business logic, data enrichment, and helper function integration.
+
+**Rationale**:
+
+- **Separation of Concerns**: Tools/routes focus on interface, services handle logic
+- **Reusability**: Services can be called from MCP tools, REST endpoints, and Chat API
+- **Enrichment**: Centralized data interpretation and formatting
+- **Testability**: Service layer can be tested independently
+- **Maintainability**: Easier to modify business logic without touching API code
+
+### [ADR-014] Service Layer Structure
+
+```python
+# src/open_meteo_mcp/services/weather_service.py
+
+from open_meteo_mcp.client import OpenMeteoClient
+from open_meteo_mcp.helpers import (
+    interpret_weather_code,
+    format_wind_direction,
+    format_temperature,
+)
+
+class WeatherService:
+    """Business logic for weather data."""
+
+    def __init__(self, client: OpenMeteoClient):
+        self.client = client
+
+    async def get_weather_enriched(
+        self,
+        latitude: float,
+        longitude: float,
+        forecast_days: int = 7
+    ) -> dict:
+        """Get weather with automatic enrichment."""
+
+        # Fetch raw data
+        weather = await self.client.get_weather(
+            latitude, longitude, forecast_days
+        )
+
+        # Enrich with interpretation
+        enrichment = {
+            "interpretation": {
+                "description": interpret_weather_code(
+                    weather.current.weather_code
+                ),
+                "wind_direction": format_wind_direction(
+                    weather.current.wind_direction
+                ),
+                "temperature_formatted": format_temperature(
+                    weather.current.temperature
+                ),
+            }
+        }
+
+        # Return combined
+        return {**weather.model_dump(), **enrichment}
+```
+
+### [ADR-014] Tool Implementation (Using Service)
+
+```python
+@mcp.tool()
+async def get_weather(latitude: float, longitude: float) -> dict:
+    """Get weather forecast with enrichment."""
+    service = WeatherService(client)
+    return await service.get_weather_enriched(latitude, longitude)
+```
+
+### [ADR-014] REST Endpoint (Using Service)
+
+```python
+@router.get("/api/tools/weather")
+async def get_weather(
+    latitude: float,
+    longitude: float,
+    forecast_days: int = 7
+) -> dict:
+    """REST endpoint using same service."""
+    service = WeatherService(client)
+    return await service.get_weather_enriched(latitude, longitude, forecast_days)
+```
+
+### [ADR-014] Service Classes
+
+| Service | Responsibility |
+|---------|-----------------|
+| `WeatherService` | Weather forecasts, enrichment, interpretation |
+| `AirQualityService` | AQI data, pollution levels, health recommendations |
+| `LocationService` | Geocoding, location search with fuzzy matching |
+| `SnowConditionsService` | Alpine snow depth, snowfall, ski conditions |
+| `ChatService` | Chat handler, session management, context |
+
+### [ADR-014] Benefits
+
+- **DRY**: Helper functions applied consistently across APIs
+- **Consistency**: Same data enrichment for all interfaces
+- **Testability**: Service layer can be unit tested independently
+- **Flexibility**: Easy to add new data sources or enhance existing services
+- **Documentation**: Services document business logic clearly
+
+### [ADR-014] Related ADRs
+
+- [ADR-012](#adr-012-rest-api-with-fastapi) - REST endpoints using services
+- [ADR-013](#adr-013-simple-chat-api-with-anthropic-sdk) - Chat service using tools
+
+---
+
+## ADR-015: Remove meteo__ Tool Prefix (Breaking Change)
+
+**Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Development Standards
+
+### [ADR-015] Decision
+
+Remove the `meteo__` prefix from all 11 MCP tool names in v4.0.0, aligning with Java v2.0.2 naming convention.
+
+**Rationale**:
+
+- **Consistency**: Match Java implementation (removed prefix in v2.0.2)
+- **Clarity**: Tools are cleaner without prefix in Claude Desktop UI
+- **Standards**: No prefix is more common in MCP ecosystem
+- **Naming Space**: FastMCP already namespaces tools, prefix redundant
+- **Semantic Versioning**: Breaking change warrants MAJOR version bump
+
+### [ADR-015] Breaking Changes
+
+**Before (v3.2.0)**:
+```
+meteo__get_weather
+meteo__get_snow_conditions
+meteo__get_air_quality
+meteo__search_location
+meteo__get_weather_alerts
+meteo__get_comfort_index
+meteo__get_astronomy
+meteo__search_location_swiss
+meteo__compare_locations
+meteo__get_historical_weather
+meteo__get_marine_conditions
+```
+
+**After (v4.0.0)**:
+```
+get_weather
+get_snow_conditions
+get_air_quality
+search_location
+get_weather_alerts
+get_comfort_index
+get_astronomy
+search_location_swiss
+compare_locations
+get_historical_weather
+get_marine_conditions
+```
+
+### [ADR-015] Migration Impact
+
+**Claude Desktop Users**:
+- ✅ Zero impact - Tool discovery is automatic
+- Claude Desktop will automatically discover new tool names
+
+**API Clients** (if any):
+- Tool names must be updated in code
+- See migration guide in docs/MIGRATION.md
+
+**MCP Clients**:
+- Automatic tool discovery - no code changes needed
+
+### [ADR-015] Migration Timeline
+
+```
+v3.2.0 (current)
+  ↓
+v4.0.0 (breaking change)
+  - Tool prefix removed
+  - Clear migration guide provided
+  - v3.x branch supported for 6 months
+  ↓
+v3.x EOL (after 6 months)
+```
+
+### [ADR-015] Migration Guide
+
+```markdown
+# Migration Guide: v3.x → v4.0.0
+
+## What Changed
+
+All MCP tool names no longer have the `meteo__` prefix.
+
+| v3.2.0 | v4.0.0 |
+|--------|--------|
+| meteo__get_weather | get_weather |
+| meteo__get_snow_conditions | get_snow_conditions |
+
+## For Claude Desktop Users
+
+**No action required.** Tool discovery is automatic.
+
+## For API Users
+
+Update tool names in your code:
+
+```python
+# Before (v3.x)
+result = await mcp.call_tool("meteo__get_weather", {
+    "latitude": 47.3769,
+    "longitude": 8.5417
+})
+
+# After (v4.0.0)
+result = await mcp.call_tool("get_weather", {
+    "latitude": 47.3769,
+    "longitude": 8.5417
+})
+```
+
+## Support Timeline
+
+- v4.0.0: New tool names (no prefix)
+- v3.2.0-v3.x: Maintained for 6 months (bugfixes only)
+- After 6 months: v3.x reaches EOL
+```
+
+### [ADR-015] Implementation Details
+
+**Files to Modify**:
+- `src/open_meteo_mcp/server.py` - Remove prefix from all @mcp.tool() decorators
+- Update all tool definitions
+- No changes needed to service layer or client
+
+**Example**:
+```python
+# Before (v3.2.0)
+@mcp.tool()
+async def meteo__get_weather(latitude: float, longitude: float) -> dict:
+    ...
+
+# After (v4.0.0)
+@mcp.tool()
+async def get_weather(latitude: float, longitude: float) -> dict:
+    ...
+```
+
+### [ADR-015] Benefits
+
+- **Cleaner Namespace**: Tools are simpler in Claude Desktop
+- **Consistency**: Aligns with Java implementation
+- **Standards**: Follows MCP ecosystem conventions
+- **Future Proof**: No redundant namespacing
+
+### [ADR-015] Related ADRs
+
+- [ADR-001](#adr-001-use-fastmcp-framework-for-mcp-protocol) - FastMCP tool definitions
+- [ADR-005](#adr-005-semantic-versioning-semver) - Semantic versioning for breaking changes
+
+---
+
 ## Summary
 
-This ADR compendium establishes **11 core architectural decisions** for the Python implementation:
+This ADR compendium now establishes **15 core architectural decisions** for the Python implementation:
 
 **Core Architecture** (4 ADRs):
 - FastMCP framework for MCP protocol
@@ -958,21 +1443,37 @@ This ADR compendium establishes **11 core architectural decisions** for the Pyth
 - Async/await with httpx for API calls
 - Python 3.11+ as minimum version
 
-**Development Standards** (3 ADRs):
+**Development Standards** (4 ADRs):
 - Semantic versioning (SemVer)
-- Tool naming with `meteo__` prefix
+- Tool naming convention (updated in v4.0.0)
 - uv for fast, reliable dependency management
+- Remove meteo__ prefix (v4.0.0 breaking change)
 
 **Quality & Observability** (3 ADRs):
 - Structured logging with structlog
 - pytest with 80%+ coverage target
 - MyPy strict type checking
 
-**Deployment & Integration** (1 ADR):
+**Deployment & Integration** (2 ADRs):
 - FastMCP Cloud for production deployment
+- REST API with FastAPI (v4.0.0)
+
+**v4.0.0 Features** (2 ADRs):
+- Simple Chat API with Anthropic SDK (v4.0.0)
+- Service Layer Pattern for Python (v4.0.0)
 
 ---
 
-**Document Status**: v1.0.0 - Complete and ready for team review
+**Document Status**: v2.0.0 - Updated for v4.0.0 feature parity
 **Last Updated**: 2026-02-04
 **Maintained By**: Architecture Team
+
+## v4.0.0 Roadmap
+
+These ADRs define the path to feature parity with Java v2.0.2:
+- ✅ ADR-012: REST API endpoints for HTTP integration
+- ✅ ADR-013: Simple Chat API with tool calling
+- ✅ ADR-014: Service layer for data enrichment
+- ✅ ADR-015: Remove tool prefix for consistency
+
+**Timeline**: 7-8 weeks to production v4.0.0 with all features
