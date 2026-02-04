@@ -33,6 +33,11 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(tools.router, prefix="/api/tools", tags=["tools"])
 
+    # Import chat router here to avoid circular imports
+    from .routers import chat
+
+    app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+
     # Health check endpoint
     @app.get("/api/health")
     async def health_check() -> JSONResponse:
