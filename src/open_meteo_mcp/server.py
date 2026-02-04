@@ -1,5 +1,7 @@
 """FastMCP server for Open Meteo weather and snow conditions."""
 
+import asyncio
+from typing import Any
 from fastmcp import FastMCP
 from pathlib import Path
 from datetime import datetime
@@ -663,55 +665,62 @@ async def compare_locations(
     """
     from .helpers import calculate_comfort_index
 
-    results = []
-
-    # Fetch data for each location
-    for loc in locations:
+    # Fetch data for all locations in parallel
+    async def fetch_location_data(loc: dict[str, Any]) -> dict[str, Any]:
         try:
             name = loc.get("name", "Unknown")
             lat = loc.get("latitude", 46.95)
             lon = loc.get("longitude", 7.45)
 
-            # Get weather
-            weather = await client.get_weather(
-                latitude=lat,
-                longitude=lon,
-                forecast_days=forecast_days,
-                include_hourly=False,
-                timezone="auto",
+            # Fetch weather and air quality in parallel
+            weather, air_quality = await asyncio.gather(
+                client.get_weather(
+                    latitude=lat,
+                    longitude=lon,
+                    forecast_days=forecast_days,
+                    include_hourly=False,
+                    timezone="auto",
+                ),
+                client.get_air_quality(
+                    latitude=lat,
+                    longitude=lon,
+                    forecast_days=1,
+                    include_pollen=False,
+                ),
+                return_exceptions=True,
             )
 
-            # Get air quality
-            air_quality = await client.get_air_quality(
-                latitude=lat, longitude=lon, forecast_days=1, include_pollen=False
-            )
+            # Handle exceptions from parallel calls
+            if isinstance(weather, Exception) or isinstance(air_quality, Exception):
+                return {"name": name, "error": str(weather or air_quality)}
 
             current_weather = (
-                weather.current_weather.model_dump() if weather.current_weather else {}
+                weather.current_weather.model_dump() if weather.current_weather else {}  # type: ignore[union-attr]
             )
             current_aqi = (
-                air_quality.current.model_dump() if air_quality.current else {}
+                air_quality.current.model_dump() if air_quality.current else {}  # type: ignore[union-attr]
             )
 
             # Calculate comfort
             comfort = calculate_comfort_index(current_weather, current_aqi)
 
-            results.append(
-                {
-                    "name": name,
-                    "latitude": lat,
-                    "longitude": lon,
-                    "temperature": current_weather.get("temperature", 0),
-                    "wind_speed": current_weather.get("windspeed", 0),
-                    "weather_code": current_weather.get("weathercode", 0),
-                    "comfort_index": comfort["overall"],
-                    "aqi": current_aqi.get("european_aqi", 0),
-                    "recommendation": comfort["recommendation"],
-                }
-            )
+            return {
+                "name": name,
+                "latitude": lat,
+                "longitude": lon,
+                "temperature": current_weather.get("temperature", 0),
+                "wind_speed": current_weather.get("windspeed", 0),
+                "weather_code": current_weather.get("weathercode", 0),
+                "comfort_index": comfort["overall"],
+                "aqi": current_aqi.get("european_aqi", 0),
+                "recommendation": comfort["recommendation"],
+            }
 
         except Exception as e:
-            results.append({"name": loc.get("name", "Unknown"), "error": str(e)})
+            return {"name": loc.get("name", "Unknown"), "error": str(e)}
+
+    # Execute all location fetches in parallel
+    results = await asyncio.gather(*[fetch_location_data(loc) for loc in locations])
 
     # Sort by criteria
     if criteria == "warmest":

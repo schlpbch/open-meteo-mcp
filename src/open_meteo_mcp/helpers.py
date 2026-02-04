@@ -164,6 +164,25 @@ def assess_ski_conditions(
         return "Poor"
 
 
+def format_wind_direction(degrees: float | int) -> str:
+    """
+    Format wind direction from degrees to compass direction.
+
+    Args:
+        degrees: Wind direction in degrees (0-360)
+
+    Returns:
+        Compass direction string (e.g., "NE", "SW")
+    """
+    # Normalize to 0-360
+    degrees = degrees % 360
+
+    # 8-point compass
+    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    index = int((degrees + 22.5) / 45) % 8
+    return directions[index]
+
+
 def format_temperature(celsius: float) -> str:
     """
     Format temperature with unit.
@@ -471,6 +490,22 @@ def generate_weather_alerts(
         # Log error but don't fail the entire function
         pass
 
+    # Add "all clear" message if no alerts
+    if not alerts:
+        alerts.append(
+            {
+                "type": "all_clear",
+                "severity": "info",
+                "start": datetime.now().isoformat(),
+                "end": (datetime.now() + timedelta(hours=24)).isoformat(),
+                "description": "No weather alerts - conditions are favorable",
+                "recommendations": [
+                    "Good conditions for outdoor activities",
+                    "Monitor forecast for any changes",
+                ],
+            }
+        )
+
     return alerts
 
 
@@ -685,6 +720,14 @@ def calculate_astronomy_data(
         blue_hour_start = sunset_tz
         blue_hour_end = sunset_tz + timedelta(minutes=40)
 
+        # Pre-dawn golden hour (30 minutes before sunrise, to sunrise)
+        pre_dawn_start = sunrise_tz - timedelta(minutes=30)
+        pre_dawn_end = sunrise_tz
+
+        # Post-dusk blue hour (after sunset, to ~50 minutes after)
+        post_dusk_start = sunset_tz
+        post_dusk_end = sunset_tz + timedelta(minutes=50)
+
         return {
             "sunrise": sunrise_tz.isoformat(),
             "sunset": sunset_tz.isoformat(),
@@ -702,14 +745,28 @@ def calculate_astronomy_data(
             "moon_phase": "waxing gibbous",  # Simplified; would need lunar calculations
             "best_photography_windows": [
                 {
-                    "type": "golden_hour",
-                    "start": golden_hour_start.isoformat(),
-                    "end": golden_hour_end.isoformat(),
+                    "type": "pre_dawn_golden_hour",
+                    "start": pre_dawn_start.isoformat(),
+                    "end": pre_dawn_end.isoformat(),
+                    "duration_minutes": 30,
                 },
                 {
-                    "type": "blue_hour",
+                    "type": "morning_golden_hour",
+                    "start": golden_hour_start.isoformat(),
+                    "end": golden_hour_end.isoformat(),
+                    "duration_minutes": 30,
+                },
+                {
+                    "type": "evening_blue_hour",
                     "start": blue_hour_start.isoformat(),
                     "end": blue_hour_end.isoformat(),
+                    "duration_minutes": 40,
+                },
+                {
+                    "type": "post_dusk_blue_hour",
+                    "start": post_dusk_start.isoformat(),
+                    "end": post_dusk_end.isoformat(),
+                    "duration_minutes": 50,
                 },
             ],
         }
