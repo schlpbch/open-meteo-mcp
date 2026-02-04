@@ -4,12 +4,18 @@ from fastmcp import FastMCP
 from pathlib import Path
 from datetime import datetime
 from .client import OpenMeteoClient
+from .services import WeatherService, AirQualityService, LocationService
 
 # Initialize FastMCP server
 mcp = FastMCP("open_meteo")
 
 # Initialize API client
 client = OpenMeteoClient()
+
+# Initialize services
+weather_service = WeatherService(client)
+air_quality_service = AirQualityService(client)
+location_service = LocationService(client)
 
 
 # ============================================================================
@@ -42,6 +48,7 @@ async def get_weather(
     - Wind speed (km/h)
     - Humidity (%)
     - Hourly and daily forecasts
+    - Enriched with weather interpretation and formatting
 
     **Data Source**: Open-Meteo API (free, no API key required)
 
@@ -63,18 +70,18 @@ async def get_weather(
     Returns:
         Dictionary containing:
         - current (dict): Current weather with temperature, weather_code, wind_speed, humidity
+        - current_weather (dict): Enriched current conditions with interpretation, formatting
         - hourly (list[dict] | None): Hourly forecasts if include_hourly=True
         - daily (list[dict]): Daily forecasts with min/max temps, precipitation, weather codes
         - location (dict): Location metadata with coordinates and timezone
     """
-    forecast = await client.get_weather(
+    return await weather_service.get_weather_enriched(
         latitude=latitude,
         longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=include_hourly,
         timezone=timezone,
     )
-    return forecast.model_dump()
 
 
 @mcp.tool(name="meteo__get_snow_conditions")
@@ -101,6 +108,7 @@ async def get_snow_conditions(
     - Forecast snowfall
     - Temperature trends
     - Hourly and daily snow data
+    - Enriched with ski condition assessment
 
     **Use this tool for**:
     - Ski trip planning
@@ -117,19 +125,18 @@ async def get_snow_conditions(
 
     Returns:
         Dictionary containing:
-        - current (dict): Current snow depth and recent snowfall
+        - current (dict): Current snow depth and recent snowfall with ski assessment
         - hourly (list[dict] | None): Hourly snow data if include_hourly=True
         - daily (list[dict]): Daily snow forecasts with accumulation and temperature
         - location (dict): Mountain location metadata
     """
-    conditions = await client.get_snow_conditions(
+    return await weather_service.get_snow_conditions_enriched(
         latitude=latitude,
         longitude=longitude,
         forecast_days=forecast_days,
         include_hourly=include_hourly,
         timezone=timezone,
     )
-    return conditions.model_dump()
 
 
 @mcp.tool(name="meteo__search_location")
@@ -154,6 +161,7 @@ async def search_location(
     - Multi-language support
     - Country filtering (e.g., country="CH" for Switzerland only)
     - Returns population, timezone, elevation
+    - Enriched with feature type descriptions and elevation categories
 
     **Workflow**:
     1. Search for location by name
@@ -181,11 +189,12 @@ async def search_location(
           - country (str): Country code
           - timezone (str): Timezone identifier
           - population (int | None): Population if applicable
+          - feature_type_description (str): Type of location (City, Mountain, Lake, etc.)
+          - elevation_category (str): Low, Medium, High, or Very High
     """
-    response = await client.search_location(
-        name=name, count=count, language=language, country=country if country else None
+    return await location_service.search_location_enriched(
+        name=name, count=count, language=language, country=country
     )
-    return response.model_dump()
 
 
 @mcp.tool(name="meteo__get_air_quality")
@@ -201,7 +210,7 @@ async def get_air_quality(
 
     Monitor air quality for health-aware outdoor planning, allergy management,
     and UV exposure assessment. Provides both European and US Air Quality Indices
-    along with detailed pollutant measurements.
+    along with detailed pollutant measurements and health interpretations.
 
     **Examples**:
     - "What's the air quality in Zurich?" → AQI, PM2.5, PM10, ozone levels
@@ -209,7 +218,7 @@ async def get_air_quality(
     - "UV index for tomorrow?" → UV radiation forecast
 
     **Provides**:
-    - European AQI (0-100+) and US AQI (0-500)
+    - European AQI (0-100+) and US AQI (0-500) with health interpretations
     - Particulate matter (PM10, PM2.5)
     - Gases (O3, NO2, SO2, CO, NH3)
     - UV index (current and clear sky)
@@ -235,19 +244,18 @@ async def get_air_quality(
 
     Returns:
         Dictionary containing:
-        - current (dict): Current AQI, pollutants (PM10, PM2.5, O3, NO2, SO2, CO), UV index
-        - hourly (list[dict]): Hourly air quality forecasts
+        - current (dict): Current AQI with interpretations, pollutants, UV index
+        - hourly (list[dict]): Hourly air quality forecasts with AQI interpretations
         - pollen (dict | None): Pollen data if include_pollen=True and location is in Europe
         - location (dict): Location metadata
     """
-    forecast = await client.get_air_quality(
+    return await air_quality_service.get_air_quality_enriched(
         latitude=latitude,
         longitude=longitude,
         forecast_days=forecast_days,
         include_pollen=include_pollen,
         timezone=timezone,
     )
-    return forecast.model_dump()
 
 
 @mcp.tool(name="meteo__get_weather_alerts")
@@ -599,41 +607,18 @@ async def search_location_swiss(
 
     Returns:
         Dictionary containing:
-        - results: List of matching Swiss locations with coordinates
+        - results: List of matching Swiss locations with enriched metadata
         - total: Number of results found
-        - search_type: Type of search performed
+        - country: Country code (CH)
+        - include_features: Whether geographic features are included
+        - language: Language of results
     """
-    # Get all results
-    response = await client.search_location(
+    return await location_service.search_location_swiss_enriched(
         name=name,
-        count=count * 2,  # Get extra results for post-processing
+        include_features=include_features,
         language=language,
-        country="CH",
+        count=count,
     )
-
-    results = response.results if response.results else []
-
-    # If include_features is True, keep all; otherwise filter to populated places
-    if not include_features:
-        # Filter to primarily populated places
-        results = [
-            r for r in results if not r.feature_code or r.feature_code.startswith("PPL")
-        ]
-
-    # Sort by population if available
-    results.sort(key=lambda x: x.population or 0, reverse=True)
-
-    # Limit to requested count
-    results = results[:count]
-
-    return {
-        "query": name,
-        "results": [r.model_dump() if hasattr(r, "model_dump") else r for r in results],
-        "total": len(results),
-        "country": "CH",
-        "include_features": include_features,
-        "language": language,
-    }
 
 
 @mcp.tool(name="meteo__compare_locations")
