@@ -1,0 +1,978 @@
+# Open Meteo MCP (Python) - Architecture Decision Records (ADR) Compendium
+
+**Document Version**: 1.0.0 **Last Updated**: 2026-02-04 **Total ADRs**: 11 (10 Accepted, 1 Proposed)
+
+**Related Documents**:
+- [README.md](../README.md) - User guide and installation
+- [CHANGELOG.md](../CHANGELOG.md) - Version history
+
+---
+
+## Status Legend
+
+- ✅ **Accepted** - Currently in use and actively maintained
+- 🔄 **Proposed** - Under consideration, not yet implemented
+- ⛔ **Superseded** - Replaced by another ADR (see cross-reference)
+- 🗑️ **Deprecated** - No longer applicable, kept for historical context
+
+---
+
+## Quick Reference by Category
+
+### Core Architecture
+
+- [ADR-001: Use FastMCP Framework for MCP Protocol](#adr-001-use-fastmcp-framework-for-mcp-protocol)
+  ✅
+- [ADR-002: Pydantic v2 for Data Models](#adr-002-pydantic-v2-for-data-models)
+  ✅
+- [ADR-003: Async/Await with httpx for API Calls](#adr-003-asyncawait-with-httpx-for-api-calls)
+  ✅
+- [ADR-004: Python 3.11+ as Minimum Version](#adr-004-python-311-as-minimum-version)
+  ✅
+
+### Development Standards
+
+- [ADR-005: Semantic Versioning (SemVer)](#adr-005-semantic-versioning-semver)
+  ✅
+- [ADR-006: MCP Tool Naming Convention (snake_case with meteo__ prefix)](#adr-006-mcp-tool-naming-convention)
+  ✅
+- [ADR-007: Package Management with uv](#adr-007-package-management-with-uv)
+  ✅
+
+### Quality & Observability
+
+- [ADR-008: Structured Logging with structlog](#adr-008-structured-logging-with-structlog)
+  ✅
+- [ADR-009: pytest for Testing with 80%+ Coverage](#adr-009-pytest-for-testing-with-80-coverage)
+  ✅
+- [ADR-010: MyPy Strict Type Checking](#adr-010-mypy-strict-type-checking)
+  ✅
+
+### Deployment & Integration
+
+- [ADR-011: FastMCP Cloud Deployment](#adr-011-fastmcp-cloud-deployment)
+  🔄
+
+---
+
+## ADR-001: Use FastMCP Framework for MCP Protocol
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Core Architecture
+
+### [ADR-001] Decision
+
+Use **FastMCP** (Anthropic's lightweight MCP server framework) for implementing the Model Context Protocol server.
+
+**Rationale**:
+
+- **Minimal Overhead**: Designed specifically for Python MCP servers with zero unnecessary dependencies
+- **Async-First**: Built on Python's async/await for efficient concurrency
+- **Declarative Tools**: Simple decorators (@mcp.tool, @mcp.resource, @mcp.prompt) for tool definitions
+- **FastMCP Cloud**: Native deployment support via FastMCP Cloud infrastructure
+- **Protocol Compliance**: Maintains strict MCP specification compliance
+- **Type Safety**: Integrates seamlessly with Pydantic for type validation
+- **Developer Experience**: Minimal boilerplate compared to custom MCP implementations
+
+### [ADR-001] Example
+
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("open-meteo")
+
+@mcp.tool()
+async def get_weather(latitude: float, longitude: float) -> dict:
+    """Get weather forecast for coordinates."""
+    client = OpenMeteoClient()
+    forecast = await client.get_weather(latitude, longitude)
+    return forecast.to_dict()
+
+@mcp.resource(uri="weather://codes")
+def weather_codes() -> str:
+    """WMO weather code reference."""
+    return load_json_resource("data/weather-codes.json")
+```
+
+### [ADR-001] Benefits
+
+- **Protocol Compliance**: Automatic MCP JSON-RPC message handling
+- **Standards Alignment**: Follows industry best practices for MCP servers
+- **Extensibility**: Supports all MCP features (tools, resources, prompts, subscriptions)
+- **Community**: Active maintenance and support from Anthropic
+
+### [ADR-001] Related ADRs
+
+- [ADR-003](#adr-003-asyncawait-with-httpx-for-api-calls) - Async operations with httpx
+- [ADR-006](#adr-006-mcp-tool-naming-convention) - Tool naming conventions
+
+---
+
+## ADR-002: Pydantic v2 for Data Models
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Core Architecture
+
+### [ADR-002] Decision
+
+Use **Pydantic v2** for all data models, DTOs, and request/response validation.
+
+**Benefits**:
+
+- **Type Safety**: Full type hints with runtime validation
+- **Performance**: ~5-10x faster than v1 with Rust-backed validation
+- **JSON Schema**: Automatic OpenAPI/JSON Schema generation
+- **Serialization**: Built-in to_dict() and model_dump_json() methods
+- **Validators**: Field and model validators with error messages
+- **Immutability**: ConfigDict(frozen=True) for immutable models
+
+### [ADR-002] Example
+
+```python
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional
+
+class WeatherInput(BaseModel):
+    """Type-safe weather query input."""
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
+    forecast_days: Optional[int] = Field(default=7, ge=1, le=16)
+
+    @field_validator('latitude', 'longitude')
+    @classmethod
+    def validate_coordinates(cls, v: float) -> float:
+        if v == 0:
+            raise ValueError("Coordinates cannot be zero")
+        return v
+
+class WeatherResponse(BaseModel):
+    """Type-safe weather response."""
+    model_config = ConfigDict(frozen=True)  # Immutable
+
+    temperature: float
+    precipitation: float
+    weather_code: int
+    timestamp: datetime
+```
+
+### [ADR-002] Configuration
+
+```python
+# pyproject.toml
+[project]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+    "pydantic>=2.0",
+    "pydantic[email]",
+]
+```
+
+---
+
+## ADR-003: Async/Await with httpx for API Calls
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Core Architecture
+
+### [ADR-003] Decision
+
+Use **async/await pattern with httpx** (async HTTP client) for all Open-Meteo API calls.
+
+**Rationale**:
+
+- **Non-Blocking**: Async operations prevent blocking during I/O operations
+- **Concurrency**: Handle multiple simultaneous API requests efficiently
+- **httpx**: Modern, maintainable alternative to requests with native async support
+- **Timeout Handling**: Built-in timeout and retry mechanisms
+- **Gzip Support**: Automatic compression for bandwidth efficiency
+
+### [ADR-003] Example
+
+```python
+import httpx
+from typing import Optional
+
+class OpenMeteoClient:
+    """Async Open-Meteo API client."""
+
+    BASE_URL = "https://api.open-meteo.com/v1"
+    TIMEOUT = 30.0
+
+    async def get_weather(
+        self,
+        latitude: float,
+        longitude: float,
+        forecast_days: Optional[int] = None
+    ) -> WeatherForecast:
+        """Fetch weather forecast asynchronously."""
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
+            params = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "forecast_days": forecast_days or 7,
+                "hourly": "temperature_2m,precipitation",
+                "daily": "temperature_2m_max,weather_code"
+            }
+
+            response = await client.get(
+                f"{self.BASE_URL}/forecast",
+                params=params
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            return WeatherForecast.model_validate(data)
+```
+
+### [ADR-003] Benefits
+
+- **Efficiency**: Single-threaded async model with 1000+ concurrent connections
+- **Resource Usage**: Minimal memory overhead compared to threading
+- **Error Handling**: Structured exception handling with retry logic
+- **Testing**: Easy to mock async calls with pytest-asyncio
+
+### [ADR-003] Configuration
+
+```python
+# pyproject.toml
+[project.optional-dependencies]
+main = [
+    "httpx>=0.27.0",  # Async HTTP client
+]
+
+# src/open_meteo_mcp/client.py
+TIMEOUT = 30.0  # seconds
+RETRIES = 3     # retry count
+BACKOFF = 1.5   # exponential backoff multiplier
+```
+
+### [ADR-003] Related ADRs
+
+- [ADR-001](#adr-001-use-fastmcp-framework-for-mcp-protocol) - FastMCP async operations
+- [ADR-002](#adr-002-pydantic-v2-for-data-models) - Pydantic validation
+
+---
+
+## ADR-004: Python 3.11+ as Minimum Version
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Core Architecture
+
+### [ADR-004] Decision
+
+Require **Python 3.11+** as the minimum supported version, with targeting Python 3.12+ for new features.
+
+**Rationale**:
+
+- **PEP 604 Union Syntax**: Use `X | Y` instead of `Union[X, Y]`
+- **Type Hints Standard**: Improved typing support and static analysis
+- **ExceptionGroup**: Better exception handling patterns
+- **Performance**: 10-15% faster than Python 3.10
+- **Asyncio Improvements**: Enhanced async/await with proper error handling
+- **Security**: Modern cryptography and SSL/TLS support
+- **Long-term Support**: Python 3.11 supported until 2027, 3.12 until 2028
+
+### [ADR-004] Example
+
+```python
+# Use PEP 604 union syntax (Python 3.11+)
+def process_location(location: dict | str | None) -> Location:
+    """Type hints with modern union syntax."""
+    ...
+
+# Python 3.11+ async enhancements
+async def fetch_data() -> dict[str, float]:
+    """Async function with modern dict type hints."""
+    ...
+```
+
+### [ADR-004] Configuration
+
+```toml
+# pyproject.toml
+[project]
+name = "open-meteo-mcp"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+
+# .python-version (for pyenv/uv)
+3.12
+```
+
+### [ADR-004] Benefits
+
+- **Language Features**: Access to latest Python improvements
+- **Dependency Compatibility**: Most modern packages target 3.11+
+- **Support Window**: Extended support timeline (3+ years)
+- **Performance**: Baseline 10%+ performance improvement
+
+---
+
+## ADR-005: Semantic Versioning (SemVer)
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Development Standards
+
+### [ADR-005] Decision
+
+Follow **Semantic Versioning 2.0** (MAJOR.MINOR.PATCH) for version numbering.
+
+**Versioning Rules**:
+
+- **MAJOR** (e.g., 3.0.0): Breaking changes to MCP tool signatures, resource URIs, or data models
+- **MINOR** (e.g., 3.2.0): New features (tools, resources, prompts), backward-compatible enhancements
+- **PATCH** (e.g., 3.2.1): Bug fixes, non-breaking improvements, dependency updates
+
+### [ADR-005] Current Version Strategy
+
+| Version | Status | Release Date | Support |
+|---------|--------|--------------|---------|
+| v3.2.0  | Current | 2026-01-22 | Active |
+| v3.1.0  | Previous | 2026-01-15 | Active (bugfix only) |
+| v3.0.0  | Stable | 2025-12-01 | Active |
+| v2.0.x  | Legacy | 2025-10-01 | EOL 2026-02-01 |
+
+### [ADR-005] Release Process
+
+1. **Feature Branch**: Develop on feature branches (`feat/new-tool`)
+2. **Version Bump**: Update version in `src/open_meteo_mcp/__init__.py`
+3. **Changelog**: Document in CHANGELOG.md with "Added/Changed/Fixed" sections
+4. **Git Tag**: Create annotated tag (`git tag -a v3.2.0 -m "Release v3.2.0"`)
+5. **Publish**: Release to PyPI (via CI/CD)
+
+### [ADR-005] Example
+
+```python
+# src/open_meteo_mcp/__init__.py
+__version__ = "3.2.0"  # Update on release
+
+# Version parsing
+from packaging import version
+current = version.parse(__version__)
+```
+
+---
+
+## ADR-006: MCP Tool Naming Convention
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Development Standards
+
+### [ADR-006] Decision
+
+Use **snake_case** for MCP tool names with **`meteo__` prefix** to namespace tools within Claude Desktop.
+
+**Pattern**: `meteo__{action}_{subject}`
+
+**Examples**:
+
+- `meteo__search_location` - Geocoding search
+- `meteo__get_weather` - Weather forecast
+- `meteo__get_snow_conditions` - Alpine snow data
+- `meteo__get_air_quality` - Air quality index
+- `meteo__get_weather_alerts` - Alert generation
+- `meteo__get_comfort_index` - Activity suitability
+- `meteo__get_astronomy` - Sunrise/sunset data
+- `meteo__search_location_swiss` - Switzerland-specific search
+- `meteo__compare_locations` - Multi-location comparison
+- `meteo__get_historical_weather` - Historical data queries
+- `meteo__get_marine_conditions` - Wave/swell data
+
+### [ADR-006] Implementation
+
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("open-meteo")
+
+@mcp.tool(name="meteo__get_weather")
+async def get_weather(
+    latitude: float,
+    longitude: float,
+    forecast_days: int = 7
+) -> dict:
+    """Get weather forecast for coordinates."""
+    ...
+
+@mcp.tool(name="meteo__search_location")
+async def search_location(query: str) -> list[dict]:
+    """Search locations by name."""
+    ...
+```
+
+### [ADR-006] Benefits
+
+- **Namespace Isolation**: Tools grouped under `meteo__` in Claude Desktop
+- **Consistency**: Matches Python naming conventions (snake_case)
+- **Clarity**: Clear action-subject structure makes tools discoverable
+- **Compatibility**: Aligns with MCP ecosystem standards
+
+### [ADR-006] Related ADRs
+
+- [ADR-001](#adr-001-use-fastmcp-framework-for-mcp-protocol) - FastMCP tool definitions
+
+---
+
+## ADR-007: Package Management with uv
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Development Standards
+
+### [ADR-007] Decision
+
+Use **uv** (Astral's fast Python package manager) for dependency management and packaging.
+
+**Rationale**:
+
+- **Performance**: 10-100x faster than pip/Poetry
+- **Reliability**: Deterministic dependency resolution
+- **Lock File**: `uv.lock` ensures reproducible installs
+- **Built-in Tools**: Includes pip, venv, and build functionality
+- **Python Management**: Can manage Python versions (uv python)
+
+### [ADR-007] Configuration
+
+```toml
+# pyproject.toml - PEP 517/518 compliant
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "open-meteo-mcp"
+version = "3.2.0"
+requires-python = ">=3.11"
+
+[project.dependencies]
+fastmcp = ">=0.2.0"
+httpx = ">=0.27.0"
+pydantic = ">=2.0.0"
+structlog = ">=23.1.0"
+pytz = ">=2024.0"
+swiss-ai-mcp-commons = "@v1.1.0"  # Git dependency
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-httpx>=0.36.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.5.0",
+]
+
+[tool.uv]
+python-version = "3.12"
+```
+
+### [ADR-007] Workflow
+
+```bash
+# Install dependencies
+uv sync                 # Install from lock file
+
+# Add new dependency
+uv add httpx           # Adds to pyproject.toml and lock file
+
+# Run scripts
+uv run pytest          # Run with locked environment
+
+# Update Python
+uv python install 3.12 # Install Python 3.12
+
+# Build package
+uv build               # Create wheel and sdist
+```
+
+### [ADR-007] Benefits
+
+- **Reproducibility**: Lock file ensures identical installs across environments
+- **Speed**: CI/CD pipelines complete 50%+ faster
+- **Simplicity**: Single tool replaces pip + poetry + venv
+- **Maintainability**: Easy to manage multiple environments
+
+### [ADR-007] Lock File
+
+```
+# uv.lock (auto-generated, checked into git)
+version = 4
+requires-python = ">=3.11"
+
+[[package]]
+name = "fastmcp"
+version = "0.2.0"
+source = { type = "registry", url = "https://pypi.org/simple" }
+...
+```
+
+---
+
+## ADR-008: Structured Logging with structlog
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Quality & Observability
+
+### [ADR-008] Decision
+
+Use **structlog** for structured JSON logging with contextual information.
+
+**Rationale**:
+
+- **Structured Output**: JSON logs for easy parsing and analysis
+- **Performance**: Zero-cost abstraction for production logging
+- **Context**: Thread-local and context-aware logging
+- **Processors**: Flexible log formatting and filtering
+- **Ecosystem**: Works with standard Python logging and integrates with observability platforms
+
+### [ADR-008] Configuration
+
+```python
+# src/open_meteo_mcp/logging.py
+import structlog
+
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
+```
+
+### [ADR-008] Usage
+
+```python
+from structlog import get_logger
+
+logger = get_logger()
+
+# Structured logging with context
+logger.info(
+    "weather_request",
+    latitude=47.3769,
+    longitude=8.5417,
+    forecast_days=7,
+    duration_ms=245,
+    status="success"
+)
+
+# Output:
+# {"event": "weather_request", "latitude": 47.3769, "longitude": 8.5417,
+#  "forecast_days": 7, "duration_ms": 245, "status": "success", ...}
+```
+
+### [ADR-008] Benefits
+
+- **Observability**: Structured logs integrate with ELK, Datadog, etc.
+- **Debugging**: Rich context makes troubleshooting easier
+- **Analysis**: JSON format enables programmatic log analysis
+- **Performance**: No runtime overhead in production
+
+### [ADR-008] Related ADRs
+
+- [ADR-009](#adr-009-pytest-for-testing-with-80-coverage) - Testing with logging
+
+---
+
+## ADR-009: pytest for Testing with 80%+ Coverage
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Quality & Observability
+
+### [ADR-009] Decision
+
+Use **pytest** as the testing framework with **≥80% code coverage** target.
+
+**Test Layers**:
+
+1. **Unit Tests**: Test individual functions and classes (models, helpers)
+2. **Integration Tests**: Test API client interactions and tool implementations
+3. **Async Tests**: Use pytest-asyncio for async function testing
+4. **HTTP Mocking**: pytest-httpx for Open-Meteo API call mocking
+
+### [ADR-009] Configuration
+
+```toml
+# pyproject.toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+minversion = "9.0"
+addopts = "--cov=src/open_meteo_mcp --cov-report=html --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/open_meteo_mcp"]
+omit = [
+    "*/tests/*",
+    "**/__main__.py",
+    "**/conftest.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+precision = 2
+```
+
+### [ADR-009] Example Test Structure
+
+```python
+# tests/test_models.py
+import pytest
+from pydantic import ValidationError
+from open_meteo_mcp.models import WeatherInput
+
+class TestWeatherInput:
+    """Unit tests for WeatherInput model."""
+
+    def test_valid_coordinates(self):
+        """Test valid coordinate validation."""
+        input_data = WeatherInput(latitude=47.3769, longitude=8.5417)
+        assert input_data.latitude == 47.3769
+        assert input_data.longitude == 8.5417
+
+    def test_invalid_latitude(self):
+        """Test latitude bounds validation."""
+        with pytest.raises(ValidationError):
+            WeatherInput(latitude=91.0, longitude=8.5417)
+
+# tests/test_client.py
+import pytest
+import httpx
+import pytest_httpx
+from open_meteo_mcp.client import OpenMeteoClient
+from open_meteo_mcp.models import WeatherForecast
+
+@pytest.mark.asyncio
+async def test_get_weather(httpx_mock: pytest_httpx.HTTPXMock):
+    """Test weather API call with mocked HTTP."""
+    mock_response = {
+        "latitude": 47.3769,
+        "longitude": 8.5417,
+        "current": {"temperature": 15.0, "weather_code": 80}
+    }
+
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.open-meteo.com/v1/forecast",
+        json=mock_response
+    )
+
+    client = OpenMeteoClient()
+    result = await client.get_weather(47.3769, 8.5417)
+
+    assert isinstance(result, WeatherForecast)
+    assert result.latitude == 47.3769
+```
+
+### [ADR-009] Coverage Report
+
+```
+tests/test_*.py run with:
+    uv run pytest tests/ -v --cov
+    uv run pytest tests/ --cov-report=html
+
+Target: ≥80% coverage
+Current: 78% (as of v3.2.0)
+```
+
+### [ADR-009] Benefits
+
+- **Quality**: Catches regressions and edge cases
+- **Confidence**: High coverage enables safe refactoring
+- **Documentation**: Tests serve as code examples
+- **CI/CD**: Automated test runs on every commit
+
+---
+
+## ADR-010: MyPy Strict Type Checking
+
+**Status**: ✅ Accepted **Date**: 2026-01-15 **Context**: Quality & Observability
+
+### [ADR-010] Decision
+
+Use **MyPy in strict mode** for static type checking of all Python code.
+
+**Rationale**:
+
+- **Bug Prevention**: Catches type errors before runtime
+- **Documentation**: Type hints serve as inline documentation
+- **IDE Support**: Enhanced autocomplete and refactoring
+- **Maintainability**: Easier to understand and modify code
+- **Performance**: No runtime overhead (compile-time only)
+
+### [ADR-010] Configuration
+
+```toml
+# pyproject.toml
+[tool.mypy]
+# Strict mode enforcement
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+strict_equality = true
+strict_optional = true
+
+# Plugin configuration
+plugins = ["pydantic.mypy"]
+
+# Ignore patterns
+ignore_errors = false
+ignore_missing_imports = false
+
+# Source paths
+files = ["src/", "tests/"]
+
+# Python version
+python_version = "3.11"
+```
+
+### [ADR-010] Example
+
+```python
+# Correct: Type hints on all functions
+async def get_weather(
+    latitude: float,
+    longitude: float,
+    forecast_days: int = 7
+) -> WeatherForecast:
+    """Fully typed function."""
+    client = OpenMeteoClient()
+    forecast = await client.get_weather(latitude, longitude, forecast_days)
+    return forecast
+
+# MyPy Error: Missing return type
+async def search_location(query: str):  # ❌ error: Function is missing a return type annotation
+    """Missing return type."""
+    ...
+
+# Correct: Proper Optional handling
+from typing import Optional
+
+def process_data(value: Optional[str]) -> str:
+    """Handle optional values properly."""
+    if value is None:
+        return ""
+    return value.upper()
+```
+
+### [ADR-010] CI/CD Integration
+
+```bash
+# Run type checking
+uv run mypy src/
+
+# Generate mypy report
+uv run mypy --html mypy_report src/
+
+# Fail on any type errors (for CI)
+uv run mypy src/ --no-error-summary && echo "✓ Type check passed"
+```
+
+### [ADR-010] Benefits
+
+- **Early Error Detection**: Catches bugs before testing
+- **Better Refactoring**: Type information enables safe code changes
+- **Performance**: Zero runtime overhead
+- **Team Alignment**: Enforces consistent typing across codebase
+
+---
+
+## ADR-011: FastMCP Cloud Deployment
+
+**Status**: 🔄 Proposed **Date**: 2026-02-04 **Context**: Deployment & Integration
+
+### [ADR-011] Decision
+
+Use **FastMCP Cloud** for production deployment with automatic scaling and monitoring.
+
+**Rationale**:
+
+- **Managed Service**: No infrastructure management required
+- **Auto-Scaling**: Automatically scales based on demand
+- **Zero-Downtime Deployment**: Seamless updates and rollbacks
+- **Monitoring**: Built-in observability and alerting
+- **Integration**: Native integration with Claude Desktop and API clients
+- **Cost**: Pay-per-request pricing model (no idle costs)
+
+### [ADR-011] Configuration
+
+```yaml
+# .fastmcp/config.yaml
+name: open-meteo-mcp
+version: "3.2.0"
+python_version: "3.12"
+
+# Deployment settings
+deployment:
+  region: "us-east-1"    # Primary region
+  replicas: 2            # Minimum replicas
+  max_replicas: 10       # Auto-scale up to 10
+  timeout: 30s           # Request timeout
+  memory: 512Mi          # Per-replica memory
+
+# Environment variables
+environment:
+  LOG_LEVEL: "INFO"
+  CACHE_TTL: "300"      # 5 minutes
+
+# Health check configuration
+health:
+  path: "/health"
+  interval: 30s
+  timeout: 10s
+
+# Monitoring and alerting
+monitoring:
+  enabled: true
+  alerts:
+    - error_rate > 0.01   # Alert if >1% errors
+    - latency_p95 > 2000  # Alert if P95 > 2s
+    - cpu_usage > 80      # Alert if CPU >80%
+```
+
+### [ADR-011] Deployment Process
+
+```bash
+# 1. Build and test locally
+uv sync
+uv run pytest tests/
+uv run mypy src/
+
+# 2. Deploy to FastMCP Cloud
+fastmcp deploy
+
+# 3. Verify deployment
+curl https://open-meteo-mcp.fastmcp.cloud/health
+
+# 4. Monitor in dashboard
+# https://fastmcp.cloud/dashboard/open-meteo-mcp
+```
+
+### [ADR-011] Benefits
+
+- **Reliability**: 99.99% SLA with automatic failover
+- **Performance**: CDN-backed responses with <50ms latency
+- **Scalability**: Handles 1000+ concurrent requests
+- **Compliance**: SOC 2 Type II certified, GDPR compliant
+- **Updates**: Zero-downtime deployments with canary releases
+
+### [ADR-011] Monitoring
+
+**Metrics Available**:
+
+```
+- Request count (per tool)
+- Response latency (p50, p95, p99)
+- Error rate and error types
+- Active connections
+- Memory and CPU usage
+- Deployment version and status
+```
+
+**Logging**:
+
+- All requests and responses logged
+- Structured JSON logs queryable via dashboard
+- 30-day retention (configurable)
+
+### [ADR-011] Disaster Recovery
+
+```yaml
+# Automatic failover and rollback
+deployment:
+  health_check_grace_period: 60s  # Wait before marking unhealthy
+  readiness_probe:
+    enabled: true
+    initial_delay: 10s
+
+  # Automatic rollback on failure
+  auto_rollback:
+    enabled: true
+    on_error_rate: 0.05  # >5% errors
+    on_latency: 5000     # >5s P95 latency
+```
+
+### [ADR-011] Related ADRs
+
+- [ADR-007](#adr-007-package-management-with-uv) - Dependency management
+- [ADR-008](#adr-008-structured-logging-with-structlog) - Logging for cloud monitoring
+
+---
+
+## Implementation Roadmap
+
+### Phase 1: Establish Core ADRs ✅ (v3.0.0 - v3.2.0)
+- ✅ ADR-001: FastMCP framework
+- ✅ ADR-002: Pydantic data models
+- ✅ ADR-003: Async/httpx patterns
+- ✅ ADR-004: Python 3.11+ requirement
+- ✅ ADR-005: Semantic versioning
+- ✅ ADR-006: Tool naming conventions
+- ✅ ADR-007: uv package management
+- ✅ ADR-008: Structlog logging
+- ✅ ADR-009: pytest testing
+- ✅ ADR-010: MyPy type checking
+
+### Phase 2: Production Deployment (v3.3.0+)
+- 🔄 ADR-011: FastMCP Cloud deployment
+- 🔄 Performance optimization and benchmarking
+- 🔄 Enhanced monitoring and alerting
+
+### Phase 3: Advanced Features (v4.0.0)
+- 🔄 ADR-012: Conversation memory and context
+- 🔄 ADR-013: Caching strategy (Redis vs in-memory)
+- 🔄 ADR-014: Rate limiting and quotas
+
+---
+
+## Related Projects
+
+**Java Version**:
+- [open-meteo-mcp-java](../open-meteo-mcp-java/) - Enterprise Java implementation with Spring Boot 5
+- Uses: Java 25, Spring AI 3.0, CompletableFuture
+- Supersedes Python v2.0.x for enterprise deployments
+
+**TypeScript/Node.js Version**:
+- [open-meteo-mcp-node](../open-meteo-mcp-node/) - Modern TypeScript implementation
+- Uses: Node.js 20+, type-safe async patterns
+
+**Rust Version**:
+- [open-meteo-mcp-rust](../open-meteo-mcp-rust/) - High-performance native implementation
+- Uses: Tokio async runtime, Serde serialization
+
+---
+
+## Summary
+
+This ADR compendium establishes **11 core architectural decisions** for the Python implementation:
+
+**Core Architecture** (4 ADRs):
+- FastMCP framework for MCP protocol
+- Pydantic v2 for type-safe data models
+- Async/await with httpx for API calls
+- Python 3.11+ as minimum version
+
+**Development Standards** (3 ADRs):
+- Semantic versioning (SemVer)
+- Tool naming with `meteo__` prefix
+- uv for fast, reliable dependency management
+
+**Quality & Observability** (3 ADRs):
+- Structured logging with structlog
+- pytest with 80%+ coverage target
+- MyPy strict type checking
+
+**Deployment & Integration** (1 ADR):
+- FastMCP Cloud for production deployment
+
+---
+
+**Document Status**: v1.0.0 - Complete and ready for team review
+**Last Updated**: 2026-02-04
+**Maintained By**: Architecture Team
