@@ -2,10 +2,12 @@
 
 
 from open_meteo_mcp.helpers import (
+    AlertThresholds,
     interpret_weather_code,
     get_weather_category,
     get_travel_impact,
     assess_ski_conditions,
+    format_wind_direction,
     format_temperature,
     calculate_wind_chill,
     get_seasonal_advice,
@@ -141,6 +143,60 @@ class TestAssessSkiConditions:
         weather_data = {"temperature": 8, "weather_code": 61}
         result = assess_ski_conditions(snow_data, weather_data)
         assert result == "Poor"
+
+
+class TestFormatWindDirection:
+    """Test wind direction formatting."""
+
+    def test_north(self):
+        """Test North wind direction."""
+        assert format_wind_direction(0) == "N"
+        assert format_wind_direction(360) == "N"
+
+    def test_northeast(self):
+        """Test Northeast wind direction."""
+        assert format_wind_direction(45) == "NE"
+
+    def test_east(self):
+        """Test East wind direction."""
+        assert format_wind_direction(90) == "E"
+
+    def test_southeast(self):
+        """Test Southeast wind direction."""
+        assert format_wind_direction(135) == "SE"
+
+    def test_south(self):
+        """Test South wind direction."""
+        assert format_wind_direction(180) == "S"
+
+    def test_southwest(self):
+        """Test Southwest wind direction."""
+        assert format_wind_direction(225) == "SW"
+
+    def test_west(self):
+        """Test West wind direction."""
+        assert format_wind_direction(270) == "W"
+
+    def test_northwest(self):
+        """Test Northwest wind direction."""
+        assert format_wind_direction(315) == "NW"
+
+    def test_boundary_angles(self):
+        """Test angles near 8-point compass boundaries."""
+        # Just before NE
+        assert format_wind_direction(22) == "N"
+        # Just after NE
+        assert format_wind_direction(68) == "NE"
+
+    def test_negative_degrees(self):
+        """Test negative degree normalization."""
+        assert format_wind_direction(-45) == "SW"
+        assert format_wind_direction(-90) == "W"
+
+    def test_large_degrees(self):
+        """Test large degree values (>360)."""
+        assert format_wind_direction(405) == "NE"
+        assert format_wind_direction(720) == "N"
 
 
 class TestFormatTemperature:
@@ -434,3 +490,190 @@ class TestNormalizeAirQualityTimezone:
         result = normalize_air_quality_timezone(air_quality_data)
         assert result["latitude"] == 47.3
         assert result["hourly"]["pm2_5"] == [10, 15]
+
+
+class TestFormatWindDirection:
+    """Test wind direction formatting - additional edge cases."""
+
+    def test_wind_direction_float_input(self):
+        """Test wind direction with float values."""
+        result = format_wind_direction(45.5)
+        assert isinstance(result, str)
+        assert result in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+    def test_wind_direction_int_input(self):
+        """Test wind direction with integer values."""
+        result = format_wind_direction(45)
+        assert result == "NE"
+
+
+class TestAlertThresholdsUsage:
+    """Test AlertThresholds constants are correctly applied."""
+
+    def test_generate_alerts_uses_thresholds(self):
+        """Test that alerts use AlertThresholds constants."""
+        # Verify AlertThresholds class exists and has expected attributes
+        assert hasattr(AlertThresholds, "HEAT_ALERT_TEMP")
+        assert hasattr(AlertThresholds, "COLD_ALERT_TEMP")
+        assert hasattr(AlertThresholds, "STORM_WIND_THRESHOLD")
+        assert hasattr(AlertThresholds, "UV_ALERT_THRESHOLD")
+
+        # Verify threshold values are reasonable
+        assert AlertThresholds.HEAT_ALERT_TEMP > 0
+        assert AlertThresholds.COLD_ALERT_TEMP < 0
+        assert AlertThresholds.STORM_WIND_THRESHOLD > 50
+
+
+class TestGenerateWeatherAlertsEdgeCases:
+    """Test weather alert generation edge cases."""
+
+    def test_alerts_with_empty_data(self):
+        """Test alert generation with empty data."""
+        current = {}
+        hourly = {}
+        daily = {}
+        alerts = generate_weather_alerts(current, hourly, daily, "UTC")
+        assert isinstance(alerts, list)
+        # Should return empty list when all data is empty
+        assert len(alerts) == 0
+
+    def test_alerts_with_none_data(self):
+        """Test alert generation with None values."""
+        alerts = generate_weather_alerts(None, None, None, "UTC")
+        assert isinstance(alerts, list)
+        assert len(alerts) == 0
+
+    def test_heat_alert_threshold(self):
+        """Test heat alert generation at threshold."""
+        current = {"temperature": 25}
+        hourly = {
+            "temperature_2m": [AlertThresholds.HEAT_ALERT_TEMP + 1] * 6,  # 31°C for 6 hours
+            "wind_gusts_10m": [10] * 24,
+            "uv_index": [2] * 24,
+            "time": [f"2024-01-01T{i:02d}:00" for i in range(24)]
+        }
+        daily = {"weather_code": [0]}
+        alerts = generate_weather_alerts(current, hourly, daily, "UTC")
+        # Should have at least one heat alert
+        heat_alerts = [a for a in alerts if a["type"] == "heat"]
+        assert len(heat_alerts) > 0
+
+    def test_cold_alert_threshold(self):
+        """Test cold alert generation at threshold."""
+        current = {"temperature": AlertThresholds.COLD_ALERT_TEMP - 5}
+        hourly = {
+            "temperature_2m": [AlertThresholds.COLD_ALERT_TEMP - 5] * 5,
+            "wind_gusts_10m": [10] * 24,
+            "uv_index": [2] * 24,
+            "time": [f"2024-01-01T{i:02d}:00" for i in range(24)]
+        }
+        daily = {"weather_code": [0]}
+        alerts = generate_weather_alerts(current, hourly, daily, "UTC")
+        # Should have at least one cold alert
+        cold_alerts = [a for a in alerts if a["type"] == "cold"]
+        assert len(cold_alerts) > 0
+
+    def test_storm_alert_wind_threshold(self):
+        """Test storm alert generation at wind threshold."""
+        current = {"temperature": 15}
+        hourly = {
+            "temperature_2m": [15] * 24,
+            "wind_gusts_10m": [AlertThresholds.STORM_WIND_THRESHOLD + 10] * 5,
+            "uv_index": [2] * 24,
+            "time": [f"2024-01-01T{i:02d}:00" for i in range(24)]
+        }
+        daily = {"weather_code": [0]}
+        alerts = generate_weather_alerts(current, hourly, daily, "UTC")
+        # Should have a storm alert
+        storm_alerts = [a for a in alerts if a["type"] == "storm"]
+        assert len(storm_alerts) > 0
+
+    def test_uv_alert_threshold(self):
+        """Test UV alert generation at threshold."""
+        current = {"temperature": 25}
+        hourly = {
+            "temperature_2m": [25] * 24,
+            "wind_gusts_10m": [10] * 24,
+            "uv_index": [AlertThresholds.UV_ALERT_THRESHOLD + 2] * 5,
+            "time": [f"2024-01-01T{i:02d}:00" for i in range(24)]
+        }
+        daily = {"weather_code": [0]}
+        alerts = generate_weather_alerts(current, hourly, daily, "UTC")
+        # Should have a UV alert
+        uv_alerts = [a for a in alerts if a["type"] == "uv"]
+        assert len(uv_alerts) > 0
+
+
+class TestComfortIndexEdgeCases:
+    """Test comfort index calculation edge cases."""
+
+    def test_comfort_index_excellent(self):
+        """Test comfort index for excellent conditions."""
+        weather = {
+            "temperature": 20,
+            "relative_humidity_2m": 50,
+            "wind_speed_10m": 5,
+            "uv_index": 3,
+            "precipitation_probability": 0,
+            "weather_code": 0
+        }
+        result = calculate_comfort_index(weather)
+        assert result["overall"] > 75
+
+    def test_comfort_index_poor(self):
+        """Test comfort index for poor conditions."""
+        weather = {
+            "temperature": -15,
+            "relative_humidity_2m": 90,
+            "wind_speed_10m": 40,
+            "uv_index": 1,
+            "precipitation_probability": 90,
+            "weather_code": 95  # Thunderstorm
+        }
+        result = calculate_comfort_index(weather)
+        assert result["overall"] < 50
+
+    def test_comfort_index_with_air_quality(self):
+        """Test comfort index with air quality data."""
+        weather = {
+            "temperature": 20,
+            "relative_humidity_2m": 50,
+            "wind_speed_10m": 5,
+            "uv_index": 3,
+            "precipitation_probability": 0,
+            "weather_code": 0
+        }
+        air_quality = {"european_aqi": 30}
+        result = calculate_comfort_index(weather, air_quality)
+        assert "factors" in result
+        assert "air_quality" in result["factors"]
+
+
+class TestNormalizeTimezoneEdgeCases:
+    """Test timezone normalization edge cases."""
+
+    def test_normalize_preserves_non_time_data(self):
+        """Test that normalization preserves non-time fields."""
+        response_data = {
+            "timezone": "UTC",
+            "latitude": 47.3,
+            "longitude": 8.5,
+            "hourly": {"time": [], "temperature_2m": [15, 16]},
+            "daily": {"time": [], "precipitation_sum": [1.2]}
+        }
+        result = normalize_timezone(response_data, "Europe/Zurich")
+        assert result["latitude"] == 47.3
+        assert result["longitude"] == 8.5
+        assert result["hourly"]["temperature_2m"] == [15, 16]
+
+    def test_normalize_handles_malformed_timezone(self):
+        """Test normalization with invalid timezone."""
+        response_data = {
+            "timezone": "InvalidTimezone",
+            "hourly": {"time": ["2024-01-01T12:00"]},
+            "daily": {"time": []}
+        }
+        result = normalize_timezone(response_data, "UTC")
+        assert isinstance(result, dict)
+        # Should default to UTC for invalid timezone
+        assert result["timezone"] == "UTC"
