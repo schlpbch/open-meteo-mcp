@@ -4,7 +4,7 @@ version = "3.2.0"
 description = "MCP server providing weather and snow conditions via Open-Meteo API"
 requires-python = ">=3.11"
 dependencies = [
-    "fastmcp>=0.2.0",
+    "fastmcp>=3.0.0",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "anthropic>=0.40.0",
