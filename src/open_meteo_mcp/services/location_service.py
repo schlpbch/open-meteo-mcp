@@ -1,19 +1,12 @@
 """Location service with enrichment."""
 
-from typing import Any, Optional
+from typing import Any
+from .base import BaseService
 from ..client import OpenMeteoClient
 
 
-class LocationService:
+class LocationService(BaseService):
     """Service for location search with automatic enrichment."""
-
-    def __init__(self, client: OpenMeteoClient):
-        """Initialize location service with client.
-
-        Args:
-            client: OpenMeteoClient instance
-        """
-        self.client = client
 
     def _enrich_location(self, location: dict[str, Any]) -> dict[str, Any]:
         """Enrich a single location result with metadata.

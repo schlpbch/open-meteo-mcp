@@ -1,6 +1,7 @@
 """Air quality service with enrichment."""
 
 from typing import Any
+from .base import BaseService
 from ..client import OpenMeteoClient
 
 # AQI interpretation threshold maps
@@ -71,16 +72,8 @@ US_AQI_THRESHOLDS = [
 ]
 
 
-class AirQualityService:
+class AirQualityService(BaseService):
     """Service for air quality data with automatic enrichment."""
-
-    def __init__(self, client: OpenMeteoClient):
-        """Initialize air quality service with client.
-
-        Args:
-            client: OpenMeteoClient instance
-        """
-        self.client = client
 
     def _interpret_aqi(self, aqi: int, thresholds: list[tuple[int, dict[str, Any]]]) -> dict[str, Any]:
         """Interpret AQI value using threshold mapping.
