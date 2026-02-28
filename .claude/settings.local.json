@@ -21,7 +21,10 @@
       "Bash(source:*)",
       "Bash(git add:*)",
       "Bash(cat:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(python3:*)"
     ]
   }
 }
