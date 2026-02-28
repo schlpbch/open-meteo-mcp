@@ -4,7 +4,6 @@ import httpx
 import structlog
 from functools import wraps
 from typing import Optional, Any, Callable, TypeVar, Coroutine
-from swiss_ai_mcp_commons.serialization import JsonSerializableMixin
 
 from .models import (
     WeatherForecast,
@@ -61,7 +60,7 @@ def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callabl
     return decorator
 
 
-class OpenMeteoClient(JsonSerializableMixin):
+class OpenMeteoClient:
     """
     Client for the Open-Meteo Weather API.
 
