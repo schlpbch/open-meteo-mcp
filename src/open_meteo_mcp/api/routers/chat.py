@@ -77,7 +77,9 @@ async def get_session_messages(session_id: str) -> dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving session: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving session: {str(e)}"
+        )
 
 
 # Endpoint: DELETE /api/chat/sessions/{sessionId}

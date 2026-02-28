@@ -371,7 +371,9 @@ def generate_weather_alerts(
 
         # HEAT ALERT (temp > 30°C for 3+ consecutive hours)
         if hourly_temps:
-            heat_hours = sum(1 for t in hourly_temps[:24] if t > AlertThresholds.HEAT_ALERT_TEMP)
+            heat_hours = sum(
+                1 for t in hourly_temps[:24] if t > AlertThresholds.HEAT_ALERT_TEMP
+            )
             if heat_hours >= AlertThresholds.HEAT_ALERT_DURATION:
                 alerts.append(
                     {
@@ -398,7 +400,9 @@ def generate_weather_alerts(
                 )
 
         # COLD ALERT (temp < -10°C)
-        if current_temp < AlertThresholds.COLD_ALERT_TEMP or any(t < AlertThresholds.COLD_ALERT_TEMP for t in hourly_temps[:24]):
+        if current_temp < AlertThresholds.COLD_ALERT_TEMP or any(
+            t < AlertThresholds.COLD_ALERT_TEMP for t in hourly_temps[:24]
+        ):
             alerts.append(
                 {
                     "type": "cold",
@@ -423,7 +427,11 @@ def generate_weather_alerts(
 
         # STORM ALERT (wind gusts > 80 km/h OR thunderstorm codes 95-99)
         high_wind_hours = (
-            [i for i, w in enumerate(hourly_winds) if w and w > AlertThresholds.STORM_WIND_THRESHOLD]
+            [
+                i
+                for i, w in enumerate(hourly_winds)
+                if w and w > AlertThresholds.STORM_WIND_THRESHOLD
+            ]
             if hourly_winds
             else []
         )
@@ -462,7 +470,11 @@ def generate_weather_alerts(
 
         # UV ALERT (UV index > 8)
         high_uv_hours = (
-            [i for i, uv in enumerate(hourly_uvs) if uv and uv > AlertThresholds.UV_ALERT_THRESHOLD]
+            [
+                i
+                for i, uv in enumerate(hourly_uvs)
+                if uv and uv > AlertThresholds.UV_ALERT_THRESHOLD
+            ]
             if hourly_uvs
             else []
         )
@@ -497,7 +509,9 @@ def generate_weather_alerts(
                 i
                 for i, w in enumerate(hourly_winds)
                 if w
-                and AlertThresholds.HIGH_WIND_ADVISORY_MIN < w <= AlertThresholds.HIGH_WIND_ADVISORY_MAX
+                and AlertThresholds.HIGH_WIND_ADVISORY_MIN
+                < w
+                <= AlertThresholds.HIGH_WIND_ADVISORY_MAX
             ]
             if hourly_winds
             else []

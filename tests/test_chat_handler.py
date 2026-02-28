@@ -161,7 +161,9 @@ class TestToolExecution:
         # Second response: end turn
         mock_response_end = Mock()
         mock_response_end.stop_reason = "end_turn"
-        mock_response_end.content = [Mock(text="Here's the weather", hasattr=lambda *args: True)]
+        mock_response_end.content = [
+            Mock(text="Here's the weather", hasattr=lambda *args: True)
+        ]
 
         # Setup mock to return different responses
         call_count = [0]
@@ -173,7 +175,9 @@ class TestToolExecution:
             else:
                 return mock_response_end
 
-        with patch.object(chat_handler.client.messages, "create", side_effect=side_effect):
+        with patch.object(
+            chat_handler.client.messages, "create", side_effect=side_effect
+        ):
             with patch.object(
                 chat_handler.weather_service,
                 "get_weather_enriched",
@@ -228,7 +232,9 @@ class TestErrorHandling:
         # Mock response
         mock_response = Mock()
         mock_response.stop_reason = "end_turn"
-        mock_response.content = [Mock(text="Created session", hasattr=lambda *args: True)]
+        mock_response.content = [
+            Mock(text="Created session", hasattr=lambda *args: True)
+        ]
 
         with patch.object(
             chat_handler.client.messages, "create", return_value=mock_response
@@ -264,15 +270,21 @@ class TestConversationFlow:
         # First turn
         mock_response_1 = Mock()
         mock_response_1.stop_reason = "end_turn"
-        mock_response_1.content = [Mock(text="First response", hasattr=lambda *args: True)]
+        mock_response_1.content = [
+            Mock(text="First response", hasattr=lambda *args: True)
+        ]
 
         # Second turn
         mock_response_2 = Mock()
         mock_response_2.stop_reason = "end_turn"
-        mock_response_2.content = [Mock(text="Second response", hasattr=lambda *args: True)]
+        mock_response_2.content = [
+            Mock(text="Second response", hasattr=lambda *args: True)
+        ]
 
         with patch.object(
-            chat_handler.client.messages, "create", side_effect=[mock_response_1, mock_response_2]
+            chat_handler.client.messages,
+            "create",
+            side_effect=[mock_response_1, mock_response_2],
         ):
             # First message
             result_1 = await chat_handler.process_message(session_id, "First question")

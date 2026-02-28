@@ -30,8 +30,9 @@ def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callabl
     Returns:
         Decorated async function with standardized error handling
     """
+
     def decorator(
-        func: Callable[..., Coroutine[Any, Any, T]]
+        func: Callable[..., Coroutine[Any, Any, T]],
     ) -> Callable[..., Coroutine[Any, Any, T]]:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -40,7 +41,11 @@ def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callabl
                 result = await func(*args, **kwargs)
                 client_self.logger.debug(
                     f"{operation_name}_fetched_successfully",
-                    **{k: v for k, v in kwargs.items() if k in ["latitude", "longitude", "name"]}
+                    **{
+                        k: v
+                        for k, v in kwargs.items()
+                        if k in ["latitude", "longitude", "name"]
+                    },
                 )
                 return result
             except httpx.HTTPStatusError as e:
@@ -51,12 +56,18 @@ def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callabl
                 )
                 raise
             except httpx.HTTPError as e:
-                client_self.logger.error(f"{operation_name}_request_error", error=str(e))
+                client_self.logger.error(
+                    f"{operation_name}_request_error", error=str(e)
+                )
                 raise
             except Exception as e:
-                client_self.logger.error(f"{operation_name}_unexpected_error", error=str(e))
+                client_self.logger.error(
+                    f"{operation_name}_unexpected_error", error=str(e)
+                )
                 raise ValueError(f"{error_message_prefix}: {e}") from e
+
         return wrapper
+
     return decorator
 
 
@@ -338,9 +349,7 @@ class OpenMeteoClient:
         if country and results:
             country_upper = country.upper()
             filtered_results = [
-                r
-                for r in results
-                if r.get("country_code", "").upper() == country_upper
+                r for r in results if r.get("country_code", "").upper() == country_upper
             ]
             # If we have matches after filtering, use them; otherwise return all
             if filtered_results:
@@ -487,7 +496,9 @@ class OpenMeteoClient:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type: type, exc_val: BaseException, exc_tb: type) -> None:
+    async def __aexit__(
+        self, exc_type: type, exc_val: BaseException, exc_tb: type
+    ) -> None:
         """Async context manager exit."""
         await self.close()
 
@@ -504,5 +515,9 @@ class OpenMeteoClient:
         """Convert client state to dictionary for JSON serialization."""
         return {
             "base_url": self.BASE_URL,
-            "timeout": float(self.client.timeout.total_seconds()) if hasattr(self.client.timeout, 'total_seconds') else self.client.timeout,
+            "timeout": (
+                float(self.client.timeout.total_seconds())
+                if hasattr(self.client.timeout, "total_seconds")
+                else self.client.timeout
+            ),
         }

@@ -86,7 +86,9 @@ class LocationService(BaseService):
 
         # Enrich each result
         if result.get("results"):
-            result["results"] = [self._enrich_location(loc) for loc in result["results"]]
+            result["results"] = [
+                self._enrich_location(loc) for loc in result["results"]
+            ]
 
         return result
 
@@ -124,7 +126,9 @@ class LocationService(BaseService):
         # Filter if needed
         if not include_features:
             results = [
-                r for r in results if not r.feature_code or r.feature_code.startswith("PPL")
+                r
+                for r in results
+                if not r.feature_code or r.feature_code.startswith("PPL")
             ]
 
         # Sort by population

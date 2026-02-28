@@ -10,7 +10,7 @@ from open_meteo_mcp.server import mcp
 @pytest.mark.asyncio
 class TestServerTools:
     """Test FastMCP tool registration and invocation."""
-    
+
     async def test_get_weather_tool_registered(self):
         """Test that get_weather tool is registered."""
         async with Client(mcp) as client:
@@ -84,7 +84,7 @@ class TestServerTools:
 @pytest.mark.asyncio
 class TestServerResources:
     """Test FastMCP resource registration and content."""
-    
+
     async def test_weather_codes_resource_registered(self):
         """Test that weather codes resource is registered."""
         async with Client(mcp) as client:
@@ -98,13 +98,13 @@ class TestServerResources:
             resources = await client.list_resources()
             resource_uris = [str(resource.uri) for resource in resources]
             assert "weather://parameters" in resource_uris
-    
+
     async def test_resource_count(self):
         """Test that 4 resources are registered."""
         async with Client(mcp) as client:
             resources = await client.list_resources()
             assert len(resources) == 4
-    
+
     async def test_weather_codes_content(self):
         """Test that weather codes resource returns valid JSON."""
         async with Client(mcp) as client:
@@ -114,9 +114,7 @@ class TestServerResources:
             assert isinstance(data, dict)
             # Should contain weather codes
             assert len(data) > 0
-    
 
-    
     async def test_weather_parameters_content(self):
         """Test that weather parameters resource returns valid JSON."""
         async with Client(mcp) as client:
@@ -131,7 +129,7 @@ class TestServerResources:
 @pytest.mark.asyncio
 class TestServerPrompts:
     """Test FastMCP prompt registration and template generation."""
-    
+
     async def test_ski_trip_weather_prompt_registered(self):
         """Test that ski trip weather prompt is registered."""
         async with Client(mcp) as client:
@@ -152,19 +150,19 @@ class TestServerPrompts:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
             assert "meteo__weather-aware-travel" in prompt_names
-    
+
     async def test_prompt_count(self):
         """Test that 3 prompts are registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             assert len(prompts) == 3
-    
+
     async def test_ski_trip_weather_prompt_content(self):
         """Test ski trip weather prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
                 "meteo__ski-trip-weather",
-                arguments={"resort": "Zermatt", "dates": "this weekend"}
+                arguments={"resort": "Zermatt", "dates": "this weekend"},
             )
             # Should return a message with content
             assert len(result.messages) > 0
@@ -175,13 +173,17 @@ class TestServerPrompts:
             assert "Zermatt" in content
             # Should mention the dates
             assert "this weekend" in content
-    
+
     async def test_plan_outdoor_activity_prompt_content(self):
         """Test outdoor activity prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
                 "meteo__plan-outdoor-activity",
-                arguments={"activity": "hiking", "location": "Bern", "timeframe": "tomorrow"}
+                arguments={
+                    "activity": "hiking",
+                    "location": "Bern",
+                    "timeframe": "tomorrow",
+                },
             )
             # Should return a message with content
             assert len(result.messages) > 0
@@ -190,13 +192,17 @@ class TestServerPrompts:
             assert len(content) > 0
             # Should mention the activity
             assert "hiking" in content
-    
+
     async def test_weather_aware_travel_prompt_content(self):
         """Test weather aware travel prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
                 "meteo__weather-aware-travel",
-                arguments={"destination": "Zürich", "travel_dates": "next week", "trip_type": "business"}
+                arguments={
+                    "destination": "Zürich",
+                    "travel_dates": "next week",
+                    "trip_type": "business",
+                },
             )
             # Should return a message with content
             assert len(result.messages) > 0
@@ -240,7 +246,10 @@ class TestServerToolExecution:
         from open_meteo_mcp import server
 
         mock_result = MagicMock()
-        mock_result.model_dump.return_value = {"current": {"snow_depth": 100}, "daily": []}
+        mock_result.model_dump.return_value = {
+            "current": {"snow_depth": 100},
+            "daily": [],
+        }
         monkeypatch.setattr(
             server.weather_service,
             "get_snow_conditions_enriched",

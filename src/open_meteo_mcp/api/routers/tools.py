@@ -33,7 +33,9 @@ class LocationSearchRequest(BaseModel):
 async def get_weather(
     latitude: float = Query(..., description="Latitude in decimal degrees"),
     longitude: float = Query(..., description="Longitude in decimal degrees"),
-    forecast_days: int = Query(7, description="Number of forecast days (1-16)", ge=1, le=16),
+    forecast_days: int = Query(
+        7, description="Number of forecast days (1-16)", ge=1, le=16
+    ),
     include_hourly: bool = Query(True, description="Include hourly forecasts"),
     timezone: str = Query("auto", description="Timezone for timestamps"),
 ) -> dict[str, Any]:
@@ -58,7 +60,9 @@ async def get_weather(
 async def get_snow_conditions(
     latitude: float = Query(..., description="Latitude in decimal degrees"),
     longitude: float = Query(..., description="Longitude in decimal degrees"),
-    forecast_days: int = Query(7, description="Number of forecast days (1-16)", ge=1, le=16),
+    forecast_days: int = Query(
+        7, description="Number of forecast days (1-16)", ge=1, le=16
+    ),
     include_hourly: bool = Query(True, description="Include hourly data"),
     timezone: str = Query("Europe/Zurich", description="Timezone for timestamps"),
 ) -> dict[str, Any]:
@@ -75,7 +79,9 @@ async def get_snow_conditions(
             timezone=timezone,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Snow conditions service error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Snow conditions service error: {str(e)}"
+        )
 
 
 # Endpoint: GET /api/tools/air-quality
@@ -83,7 +89,9 @@ async def get_snow_conditions(
 async def get_air_quality(
     latitude: float = Query(..., description="Latitude in decimal degrees"),
     longitude: float = Query(..., description="Longitude in decimal degrees"),
-    forecast_days: int = Query(5, description="Number of forecast days (1-5)", ge=1, le=5),
+    forecast_days: int = Query(
+        5, description="Number of forecast days (1-5)", ge=1, le=5
+    ),
     include_pollen: bool = Query(True, description="Include pollen data"),
     timezone: str = Query("auto", description="Timezone for timestamps"),
 ) -> dict[str, Any]:
@@ -100,7 +108,9 @@ async def get_air_quality(
             timezone=timezone,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Air quality service error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Air quality service error: {str(e)}"
+        )
 
 
 # Endpoint: POST /api/tools/search-location

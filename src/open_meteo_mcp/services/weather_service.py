@@ -150,9 +150,7 @@ class WeatherService(BaseService):
             weather_current = weather_data["current_weather"]
 
             # Add ski condition assessment
-            current["ski_assessment"] = assess_ski_conditions(
-                current, weather_current
-            )
+            current["ski_assessment"] = assess_ski_conditions(current, weather_current)
 
             # Format temperature
             self._enrich_if_exists(
@@ -162,7 +160,9 @@ class WeatherService(BaseService):
                 "temperature_formatted",
             )
             if "temperature_formatted" in weather_current:
-                current["temperature_formatted"] = weather_current["temperature_formatted"]
+                current["temperature_formatted"] = weather_current[
+                    "temperature_formatted"
+                ]
 
         # Enrich daily snow forecast
         if result.get("daily") and weather_data.get("daily"):
@@ -177,6 +177,8 @@ class WeatherService(BaseService):
                 "weather_interpretation",
             )
             if "weather_interpretation" in daily_weather:
-                daily_snow["weather_interpretation"] = daily_weather["weather_interpretation"]
+                daily_snow["weather_interpretation"] = daily_weather[
+                    "weather_interpretation"
+                ]
 
         return result

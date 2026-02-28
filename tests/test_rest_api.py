@@ -130,7 +130,9 @@ class TestRESTAPIResponseFormats:
         assert response.headers["content-type"] == "application/json"
         data = response.json()
         assert isinstance(data, dict)
-        assert all(isinstance(v, (str, int, float, bool, type(None))) for v in data.values())
+        assert all(
+            isinstance(v, (str, int, float, bool, type(None))) for v in data.values()
+        )
 
     def test_root_response_format(self, client):
         """Test root endpoint response format."""
@@ -152,4 +154,7 @@ class TestRESTAPICORS:
         )
         assert response.status_code == 200
         # CORS headers should be present if configured
-        assert response.headers.get("access-control-allow-origin") or "Access-Control-Allow-Origin" not in response.headers
+        assert (
+            response.headers.get("access-control-allow-origin")
+            or "Access-Control-Allow-Origin" not in response.headers
+        )
