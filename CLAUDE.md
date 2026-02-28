@@ -5,7 +5,7 @@
 **open-meteo-mcp** is a Model Context Protocol (MCP) server providing weather, snow conditions, air quality, and location services via the Open-Meteo API. This Python implementation extends the base functionality with a REST API and integrated chat interface.
 
 - **Version**: 3.3.0
-- **Python**: 3.11+
+- **Python**: 3.13+
 - **Framework**: FastMCP 3.0+ with FastAPI (optional REST API)
 - **Status**: Production-ready with strict type safety
 - **Scope**: Weather, snow, air quality, location services
@@ -17,7 +17,7 @@ This is **the primary/extended Python implementation** of the Open Meteo MCP ser
 
 | Aspect | Reference (TypeScript) | Python Extended |
 |--------|---------|---------|
-| **Language** | TypeScript/Node.js | Python 3.11+ |
+| **Language** | TypeScript/Node.js | Python 3.13+ |
 | **Core Tools** | 11 | 11 (identical) |
 | **Reference Resources** | 4 | 4 (identical) |
 | **REST API** | ✗ | ✓ (NEW) |
@@ -433,5 +433,5 @@ For questions or issues:
 **Last Updated**: v3.3.0
 **Maintained By**: Development Team
 **Status**: Production Ready - Extended with REST API & Chat
-**Python Minimum**: 3.11
+**Python Minimum**: 3.13
 **FastMCP**: 3.0+
