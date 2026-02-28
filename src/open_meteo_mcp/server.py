@@ -8,6 +8,7 @@ from typing import Any, cast
 from fastmcp import FastMCP
 
 from .client import OpenMeteoClient
+from .decorators import tool_error_handler
 from .models import AirQualityForecast, WeatherForecast
 from .services import AirQualityService, LocationService, WeatherService
 
@@ -29,6 +30,7 @@ location_service = LocationService(client)
 
 
 @mcp.tool(name="meteo__get_weather")
+@tool_error_handler("meteo__get_weather")
 async def get_weather(
     latitude: float,
     longitude: float,
@@ -90,6 +92,7 @@ async def get_weather(
 
 
 @mcp.tool(name="meteo__get_snow_conditions")
+@tool_error_handler("meteo__get_snow_conditions")
 async def get_snow_conditions(
     latitude: float,
     longitude: float,
@@ -145,6 +148,7 @@ async def get_snow_conditions(
 
 
 @mcp.tool(name="meteo__search_location")
+@tool_error_handler("meteo__search_location")
 async def search_location(
     name: str, count: int = 10, language: str = "en", country: str = ""
 ) -> dict[str, Any]:
@@ -203,6 +207,7 @@ async def search_location(
 
 
 @mcp.tool(name="meteo__get_air_quality")
+@tool_error_handler("meteo__get_air_quality")
 async def get_air_quality(
     latitude: float,
     longitude: float,
@@ -264,6 +269,7 @@ async def get_air_quality(
 
 
 @mcp.tool(name="meteo__get_weather_alerts")
+@tool_error_handler("meteo__get_weather_alerts")
 async def get_weather_alerts(
     latitude: float, longitude: float, forecast_hours: int = 24, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -328,6 +334,7 @@ async def get_weather_alerts(
 
 
 @mcp.tool(name="meteo__get_historical_weather")
+@tool_error_handler("meteo__get_historical_weather")
 async def get_historical_weather(
     latitude: float,
     longitude: float,
@@ -378,6 +385,7 @@ async def get_historical_weather(
 
 
 @mcp.tool(name="meteo__get_marine_conditions")
+@tool_error_handler("meteo__get_marine_conditions")
 async def get_marine_conditions(
     latitude: float,
     longitude: float,
@@ -432,6 +440,7 @@ async def get_marine_conditions(
 
 
 @mcp.tool(name="meteo__get_comfort_index")
+@tool_error_handler("meteo__get_comfort_index")
 async def get_comfort_index(
     latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -510,6 +519,7 @@ async def get_comfort_index(
 
 
 @mcp.tool(name="meteo__get_astronomy")
+@tool_error_handler("meteo__get_astronomy")
 async def get_astronomy(
     latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -577,6 +587,7 @@ async def get_astronomy(
 
 
 @mcp.tool(name="meteo__search_location_swiss")
+@tool_error_handler("meteo__search_location_swiss")
 async def search_location_swiss(
     name: str, include_features: bool = False, language: str = "en", count: int = 10
 ) -> dict[str, Any]:
@@ -627,6 +638,7 @@ async def search_location_swiss(
 
 
 @mcp.tool(name="meteo__compare_locations")
+@tool_error_handler("meteo__compare_locations")
 async def compare_locations(
     locations: list[dict[str, Any]],
     criteria: str = "best_overall",
