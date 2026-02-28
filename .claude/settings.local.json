@@ -19,7 +19,9 @@
       "Bash(dir:*)",
       "Bash(gh release:*)",
       "Bash(source:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cat:*)",
+      "Bash(git:*)"
     ]
   }
 }

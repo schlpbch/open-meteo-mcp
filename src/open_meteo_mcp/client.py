@@ -19,7 +19,11 @@ logger = structlog.get_logger()
 T = TypeVar("T")
 
 
-def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callable:
+def handle_api_errors(
+    operation_name: str, error_message_prefix: str
+) -> Callable[
+    [Callable[..., Coroutine[Any, Any, T]]], Callable[..., Coroutine[Any, Any, T]]
+]:
     """
     Decorator for handling API errors with consistent logging and error conversion.
 

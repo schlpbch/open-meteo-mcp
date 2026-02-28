@@ -33,7 +33,7 @@ async def get_weather(
     forecast_days: int = 7,
     include_hourly: bool = True,
     timezone: str = "auto",
-) -> dict:
+) -> dict[str, Any]:
     """
     Retrieves weather forecast for a location (temperature, rain, sunshine).
 
@@ -94,7 +94,7 @@ async def get_snow_conditions(
     forecast_days: int = 7,
     include_hourly: bool = True,
     timezone: str = "Europe/Zurich",
-) -> dict:
+) -> dict[str, Any]:
     """
     Retrieves snow conditions and forecasts for mountain locations.
 
@@ -145,7 +145,7 @@ async def get_snow_conditions(
 @mcp.tool(name="meteo__search_location")
 async def search_location(
     name: str, count: int = 10, language: str = "en", country: str = ""
-) -> dict:
+) -> dict[str, Any]:
     """
     Searches for locations by name to get coordinates for weather queries.
 
@@ -207,7 +207,7 @@ async def get_air_quality(
     forecast_days: int = 5,
     include_pollen: bool = True,
     timezone: str = "auto",
-) -> dict:
+) -> dict[str, Any]:
     """
     Retrieves air quality forecast including AQI, pollutants, UV index, and pollen data.
 
@@ -264,7 +264,7 @@ async def get_air_quality(
 @mcp.tool(name="meteo__get_weather_alerts")
 async def get_weather_alerts(
     latitude: float, longitude: float, forecast_hours: int = 24, timezone: str = "auto"
-) -> dict:
+) -> dict[str, Any]:
     """
     Generate weather alerts based on thresholds and current forecast.
 
@@ -372,7 +372,7 @@ async def get_historical_weather(
         hourly=include_hourly,
         timezone=timezone,
     )
-    return cast(dict[str, Any], historical.model_dump())
+    return historical.model_dump()
 
 
 @mcp.tool(name="meteo__get_marine_conditions")
@@ -426,13 +426,13 @@ async def get_marine_conditions(
         include_hourly=include_hourly,
         timezone=timezone,
     )
-    return cast(dict[str, Any], conditions.model_dump())
+    return conditions.model_dump()
 
 
 @mcp.tool(name="meteo__get_comfort_index")
 async def get_comfort_index(
     latitude: float, longitude: float, timezone: str = "auto"
-) -> dict:
+) -> dict[str, Any]:
     """
     Calculates outdoor activity comfort index (0-100). Takes latitude, longitude, and timezone parameters.
 
@@ -510,7 +510,7 @@ async def get_comfort_index(
 @mcp.tool(name="meteo__get_astronomy")
 async def get_astronomy(
     latitude: float, longitude: float, timezone: str = "auto"
-) -> dict:
+) -> dict[str, Any]:
     """
     Provides astronomical data for a location (sunrise, sunset, golden hour).
 
@@ -577,7 +577,7 @@ async def get_astronomy(
 @mcp.tool(name="meteo__search_location_swiss")
 async def search_location_swiss(
     name: str, include_features: bool = False, language: str = "en", count: int = 10
-) -> dict:
+) -> dict[str, Any]:
     """
     Search for locations in Switzerland with optional geographic features.
 
@@ -626,8 +626,10 @@ async def search_location_swiss(
 
 @mcp.tool(name="meteo__compare_locations")
 async def compare_locations(
-    locations: list, criteria: str = "best_overall", forecast_days: int = 1
-) -> dict:
+    locations: list[dict[str, Any]],
+    criteria: str = "best_overall",
+    forecast_days: int = 1,
+) -> dict[str, Any]:
     """
     Compare weather conditions across multiple locations.
 
