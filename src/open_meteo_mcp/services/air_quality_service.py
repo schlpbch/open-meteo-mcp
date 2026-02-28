@@ -3,6 +3,73 @@
 from typing import Any
 from ..client import OpenMeteoClient
 
+# AQI interpretation threshold maps
+EUROPEAN_AQI_THRESHOLDS = [
+    (20, {
+        "category": "Good",
+        "description": "Air quality is good",
+        "health_advice": "Air quality is satisfactory; enjoy outdoor activities",
+        "sensitive_groups_advice": "No restrictions",
+    }),
+    (40, {
+        "category": "Fair",
+        "description": "Air quality is fair",
+        "health_advice": "Air quality is acceptable; some pollutants may be concerning",
+        "sensitive_groups_advice": "Sensitive groups may experience minor symptoms",
+    }),
+    (60, {
+        "category": "Moderate",
+        "description": "Air quality is moderate",
+        "health_advice": "Reduce prolonged outdoor exertion",
+        "sensitive_groups_advice": "Limit outdoor activities",
+    }),
+    (80, {
+        "category": "Poor",
+        "description": "Air quality is poor",
+        "health_advice": "Avoid outdoor activities",
+        "sensitive_groups_advice": "Stay indoors; use air purifiers",
+    }),
+    (float('inf'), {
+        "category": "Very Poor",
+        "description": "Air quality is extremely poor",
+        "health_advice": "Minimize outdoor exposure",
+        "sensitive_groups_advice": "Remain indoors with air filtration",
+    }),
+]
+
+US_AQI_THRESHOLDS = [
+    (50, {
+        "category": "Good",
+        "description": "Air quality is satisfactory",
+        "health_advice": "No health impacts expected",
+    }),
+    (100, {
+        "category": "Moderate",
+        "description": "Air quality is acceptable",
+        "health_advice": "Unusually sensitive people should consider limiting prolonged outdoor activities",
+    }),
+    (150, {
+        "category": "Unhealthy for Sensitive Groups",
+        "description": "Members of sensitive groups may experience health effects",
+        "health_advice": "Sensitive groups should limit outdoor activities",
+    }),
+    (200, {
+        "category": "Unhealthy",
+        "description": "Everyone may begin to experience health effects",
+        "health_advice": "Reduce outdoor activities and limit exposure",
+    }),
+    (300, {
+        "category": "Very Unhealthy",
+        "description": "Health alert: The risk of health effects is increased for everyone",
+        "health_advice": "Avoid outdoor activities; stay indoors with air filtration",
+    }),
+    (float('inf'), {
+        "category": "Hazardous",
+        "description": "Health warning: The entire population is more likely to be affected",
+        "health_advice": "Everyone should remain indoors; use air purifiers",
+    }),
+]
+
 
 class AirQualityService:
     """Service for air quality data with automatic enrichment."""
@@ -15,6 +82,22 @@ class AirQualityService:
         """
         self.client = client
 
+    def _interpret_aqi(self, aqi: int, thresholds: list[tuple[int, dict[str, Any]]]) -> dict[str, Any]:
+        """Interpret AQI value using threshold mapping.
+
+        Args:
+            aqi: AQI value to interpret
+            thresholds: List of (threshold, interpretation) tuples, ordered ascending
+
+        Returns:
+            Dictionary with interpretation, category, and recommendations
+        """
+        for threshold, interpretation in thresholds:
+            if aqi <= threshold:
+                return interpretation.copy()
+        # Fallback (should not reach due to float('inf') in threshold lists)
+        return thresholds[-1][1].copy()
+
     def _get_aqi_interpretation(self, aqi: int) -> dict[str, Any]:
         """Interpret European AQI value.
 
@@ -24,41 +107,7 @@ class AirQualityService:
         Returns:
             Dictionary with interpretation, category, and recommendations
         """
-        if aqi <= 20:
-            return {
-                "category": "Good",
-                "description": "Air quality is good",
-                "health_advice": "Air quality is satisfactory; enjoy outdoor activities",
-                "sensitive_groups_advice": "No restrictions",
-            }
-        elif aqi <= 40:
-            return {
-                "category": "Fair",
-                "description": "Air quality is fair",
-                "health_advice": "Air quality is acceptable; some pollutants may be concerning",
-                "sensitive_groups_advice": "Sensitive groups may experience minor symptoms",
-            }
-        elif aqi <= 60:
-            return {
-                "category": "Moderate",
-                "description": "Air quality is moderate",
-                "health_advice": "Reduce prolonged outdoor exertion",
-                "sensitive_groups_advice": "Limit outdoor activities",
-            }
-        elif aqi <= 80:
-            return {
-                "category": "Poor",
-                "description": "Air quality is poor",
-                "health_advice": "Avoid outdoor activities",
-                "sensitive_groups_advice": "Stay indoors; use air purifiers",
-            }
-        else:
-            return {
-                "category": "Very Poor",
-                "description": "Air quality is extremely poor",
-                "health_advice": "Minimize outdoor exposure",
-                "sensitive_groups_advice": "Remain indoors with air filtration",
-            }
+        return self._interpret_aqi(aqi, EUROPEAN_AQI_THRESHOLDS)
 
     def _get_us_aqi_interpretation(self, aqi: int) -> dict[str, Any]:
         """Interpret US AQI value.
@@ -69,42 +118,7 @@ class AirQualityService:
         Returns:
             Dictionary with interpretation and health advice
         """
-        if aqi <= 50:
-            return {
-                "category": "Good",
-                "description": "Air quality is satisfactory",
-                "health_advice": "No health impacts expected",
-            }
-        elif aqi <= 100:
-            return {
-                "category": "Moderate",
-                "description": "Air quality is acceptable",
-                "health_advice": "Unusually sensitive people should consider limiting prolonged outdoor activities",
-            }
-        elif aqi <= 150:
-            return {
-                "category": "Unhealthy for Sensitive Groups",
-                "description": "Members of sensitive groups may experience health effects",
-                "health_advice": "Sensitive groups should limit outdoor activities",
-            }
-        elif aqi <= 200:
-            return {
-                "category": "Unhealthy",
-                "description": "Everyone may begin to experience health effects",
-                "health_advice": "Reduce outdoor activities and limit exposure",
-            }
-        elif aqi <= 300:
-            return {
-                "category": "Very Unhealthy",
-                "description": "Health alert: The risk of health effects is increased for everyone",
-                "health_advice": "Avoid outdoor activities; stay indoors with air filtration",
-            }
-        else:
-            return {
-                "category": "Hazardous",
-                "description": "Health warning: The entire population is more likely to be affected",
-                "health_advice": "Everyone should remain indoors; use air purifiers",
-            }
+        return self._interpret_aqi(aqi, US_AQI_THRESHOLDS)
 
     async def get_air_quality_enriched(
         self,

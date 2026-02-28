@@ -5,6 +5,44 @@ from datetime import datetime, timedelta
 import pytz  # type: ignore[import-untyped]
 
 
+class AlertThresholds:
+    """Weather alert threshold constants."""
+
+    # Temperature thresholds (°C)
+    HEAT_ALERT_TEMP = 30  # High heat alert threshold
+    COLD_ALERT_TEMP = -10  # Cold alert threshold
+    FREEZING_POINT = 0  # Water freezing point for snow assessment
+
+    # Wind thresholds (km/h)
+    STORM_WIND_THRESHOLD = 80  # Severe wind/storm threshold
+    HIGH_WIND_ADVISORY_MIN = 50  # Lower bound for high wind advisory
+    HIGH_WIND_ADVISORY_MAX = 80  # Upper bound for high wind advisory
+
+    # Air quality thresholds
+    UV_ALERT_THRESHOLD = 8  # UV index alert level
+
+    # Precipitation thresholds
+    PRECIPITATION_ALERT_THRESHOLD = 0.5  # mm for alert consideration
+    HEAVY_RAIN_THRESHOLD = 10  # mm/hour for heavy rain
+    MODERATE_RAIN_THRESHOLD = 5  # mm/hour for moderate rain
+
+    # Snow assessment thresholds (cm)
+    SNOW_DEPTH_THRESHOLD = 0.5  # Minimum snow depth for assessment
+
+    # Heat alert duration (hours)
+    HEAT_ALERT_DURATION = 3  # Consecutive hours above heat threshold
+
+    # Flow/current thresholds (m³/s) - for river/water activity safety
+    FLOW_SAFE_MAX = 100
+    FLOW_MODERATE_MIN = 100
+    FLOW_MODERATE_MAX = 220
+    FLOW_ELEVATED_MIN = 220
+    FLOW_ELEVATED_MAX = 300
+    FLOW_HIGH_MIN = 300
+    FLOW_HIGH_MAX = 430
+    FLOW_VERY_HIGH_MIN = 430
+
+
 def interpret_weather_code(code: int) -> Dict[str, Any]:
     """
     Interpret WMO weather codes into human-readable descriptions.
@@ -333,8 +371,8 @@ def generate_weather_alerts(
 
         # HEAT ALERT (temp > 30°C for 3+ consecutive hours)
         if hourly_temps:
-            heat_hours = sum(1 for t in hourly_temps[:24] if t > 30)
-            if heat_hours >= 3:
+            heat_hours = sum(1 for t in hourly_temps[:24] if t > AlertThresholds.HEAT_ALERT_TEMP)
+            if heat_hours >= AlertThresholds.HEAT_ALERT_DURATION:
                 alerts.append(
                     {
                         "type": "heat",
@@ -349,7 +387,7 @@ def generate_weather_alerts(
                             if hourly_times
                             else (datetime.now() + timedelta(hours=6)).isoformat()
                         ),
-                        "description": f"High temperature alert: {heat_hours} hours above 30°C expected",
+                        "description": f"High temperature alert: {heat_hours} hours above {AlertThresholds.HEAT_ALERT_TEMP}°C expected",
                         "recommendations": [
                             "Limit outdoor activities during peak heat (11am-4pm)",
                             "Increase hydration significantly",
@@ -360,7 +398,7 @@ def generate_weather_alerts(
                 )
 
         # COLD ALERT (temp < -10°C)
-        if current_temp < -10 or any(t < -10 for t in hourly_temps[:24]):
+        if current_temp < AlertThresholds.COLD_ALERT_TEMP or any(t < AlertThresholds.COLD_ALERT_TEMP for t in hourly_temps[:24]):
             alerts.append(
                 {
                     "type": "cold",
@@ -385,7 +423,7 @@ def generate_weather_alerts(
 
         # STORM ALERT (wind gusts > 80 km/h OR thunderstorm codes 95-99)
         high_wind_hours = (
-            [i for i, w in enumerate(hourly_winds) if w and w > 80]
+            [i for i, w in enumerate(hourly_winds) if w and w > AlertThresholds.STORM_WIND_THRESHOLD]
             if hourly_winds
             else []
         )
@@ -412,7 +450,7 @@ def generate_weather_alerts(
                         if high_wind_hours and hourly_times
                         else (datetime.now() + timedelta(hours=4)).isoformat()
                     ),
-                    "description": "Storm warning: strong winds (>80 km/h) or thunderstorms expected",
+                    "description": f"Storm warning: strong winds (>{AlertThresholds.STORM_WIND_THRESHOLD} km/h) or thunderstorms expected",
                     "recommendations": [
                         "Avoid outdoor activities in exposed areas",
                         "Secure loose outdoor items",
@@ -424,7 +462,7 @@ def generate_weather_alerts(
 
         # UV ALERT (UV index > 8)
         high_uv_hours = (
-            [i for i, uv in enumerate(hourly_uvs) if uv and uv > 8]
+            [i for i, uv in enumerate(hourly_uvs) if uv and uv > AlertThresholds.UV_ALERT_THRESHOLD]
             if hourly_uvs
             else []
         )
@@ -443,7 +481,7 @@ def generate_weather_alerts(
                         if hourly_times
                         else (datetime.now() + timedelta(hours=3)).isoformat()
                     ),
-                    "description": "Extreme UV alert: UV index above 8 expected",
+                    "description": f"Extreme UV alert: UV index above {AlertThresholds.UV_ALERT_THRESHOLD} expected",
                     "recommendations": [
                         "Apply high SPF sunscreen (SPF 50+) every 2 hours",
                         "Seek shade during peak UV hours (10am-4pm)",
@@ -455,7 +493,12 @@ def generate_weather_alerts(
 
         # HIGH WIND ALERT (gusts > 50 km/h but < 80)
         moderate_wind_hours = (
-            [i for i, w in enumerate(hourly_winds) if w and 50 < w <= 80]
+            [
+                i
+                for i, w in enumerate(hourly_winds)
+                if w
+                and AlertThresholds.HIGH_WIND_ADVISORY_MIN < w <= AlertThresholds.HIGH_WIND_ADVISORY_MAX
+            ]
             if hourly_winds
             else []
         )
@@ -476,7 +519,7 @@ def generate_weather_alerts(
                         if hourly_times
                         else (datetime.now() + timedelta(hours=2)).isoformat()
                     ),
-                    "description": "High wind advisory: gusts 50-80 km/h expected",
+                    "description": f"High wind advisory: gusts {AlertThresholds.HIGH_WIND_ADVISORY_MIN}-{AlertThresholds.HIGH_WIND_ADVISORY_MAX} km/h expected",
                     "recommendations": [
                         "Be cautious in exposed areas",
                         "Check forecasts before outdoor activities",
