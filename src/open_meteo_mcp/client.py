@@ -98,7 +98,7 @@ class OpenMeteoClient:
             base_url=self.BASE_URL,
             timeout=timeout,
             follow_redirects=True,
-            headers={"User-Agent": "open-meteo-mcp/2.0.0"},
+            headers={"User-Agent": "open-meteo-mcp/3.3.0"},
         )
         self.logger = logger.bind(component="OpenMeteoClient")
 
