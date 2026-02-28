@@ -4,7 +4,7 @@ from typing import Any
 from .base import BaseService
 
 # AQI interpretation threshold maps
-EUROPEAN_AQI_THRESHOLDS = [
+EUROPEAN_AQI_THRESHOLDS: list[tuple[int | float, dict[str, str]]] = [
     (
         20,
         {
@@ -52,7 +52,7 @@ EUROPEAN_AQI_THRESHOLDS = [
     ),
 ]
 
-US_AQI_THRESHOLDS = [
+US_AQI_THRESHOLDS: list[tuple[int | float, dict[str, str]]] = [
     (
         50,
         {
@@ -108,7 +108,7 @@ class AirQualityService(BaseService):
     """Service for air quality data with automatic enrichment."""
 
     def _interpret_aqi(
-        self, aqi: int, thresholds: list[tuple[int, dict[str, Any]]]
+        self, aqi: int, thresholds: list[tuple[int | float, dict[str, str]]]
     ) -> dict[str, Any]:
         """Interpret AQI value using threshold mapping.
 
@@ -181,7 +181,7 @@ class AirQualityService(BaseService):
         )
 
         # Convert to dict
-        result = forecast.model_dump()
+        result: dict[str, Any] = forecast.model_dump()
 
         # Enrich current air quality
         if result.get("current"):

@@ -1,11 +1,12 @@
 """FastMCP server for Open Meteo weather and snow conditions."""
 
 import asyncio
-from typing import Any
+from typing import Any, cast
 from fastmcp import FastMCP
 from pathlib import Path
 from datetime import datetime
 from .client import OpenMeteoClient
+from .models import WeatherForecast, AirQualityForecast
 from .services import WeatherService, AirQualityService, LocationService
 
 # Initialize FastMCP server
@@ -332,7 +333,7 @@ async def get_historical_weather(
     end_date: str,
     include_hourly: bool = False,
     timezone: str = "auto",
-) -> dict:
+) -> dict[str, Any]:
     """
     Retrieves historical weather data for trend analysis and research.
 
@@ -371,7 +372,7 @@ async def get_historical_weather(
         hourly=include_hourly,
         timezone=timezone,
     )
-    return historical.model_dump()
+    return cast(dict[str, Any], historical.model_dump())
 
 
 @mcp.tool(name="meteo__get_marine_conditions")
@@ -381,7 +382,7 @@ async def get_marine_conditions(
     forecast_days: int = 7,
     include_hourly: bool = True,
     timezone: str = "auto",
-) -> dict:
+) -> dict[str, Any]:
     """
     Retrieves marine conditions for lakes and coastal areas.
 
@@ -425,7 +426,7 @@ async def get_marine_conditions(
         include_hourly=include_hourly,
         timezone=timezone,
     )
-    return conditions.model_dump()
+    return cast(dict[str, Any], conditions.model_dump())
 
 
 @mcp.tool(name="meteo__get_comfort_index")
@@ -673,7 +674,7 @@ async def compare_locations(
             lon = loc.get("longitude", 7.45)
 
             # Fetch weather and air quality in parallel
-            weather, air_quality = await asyncio.gather(
+            results = await asyncio.gather(
                 client.get_weather(
                     latitude=lat,
                     longitude=lon,
@@ -689,16 +690,22 @@ async def compare_locations(
                 ),
                 return_exceptions=True,
             )
+            weather: WeatherForecast | Exception = cast(
+                WeatherForecast | Exception, results[0]
+            )
+            air_quality: AirQualityForecast | Exception = cast(
+                AirQualityForecast | Exception, results[1]
+            )
 
             # Handle exceptions from parallel calls
             if isinstance(weather, Exception) or isinstance(air_quality, Exception):
                 return {"name": name, "error": str(weather or air_quality)}
 
             current_weather = (
-                weather.current_weather.model_dump() if weather.current_weather else {}  # type: ignore[union-attr]
+                weather.current_weather.model_dump() if weather.current_weather else {}
             )
             current_aqi = (
-                air_quality.current.model_dump() if air_quality.current else {}  # type: ignore[union-attr]
+                air_quality.current.model_dump() if air_quality.current else {}
             )
 
             # Calculate comfort

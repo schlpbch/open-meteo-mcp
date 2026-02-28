@@ -48,7 +48,7 @@ class WeatherService(BaseService):
         )
 
         # Convert to dict
-        result = forecast.model_dump()
+        result: dict[str, Any] = forecast.model_dump()
 
         # Enrich current weather if available
         def enrich_current(current: dict[str, Any]) -> None:
@@ -132,7 +132,7 @@ class WeatherService(BaseService):
         )
 
         # Convert to dict
-        result = conditions.model_dump()
+        result: dict[str, Any] = conditions.model_dump()
 
         # Get weather data for enrichment
         weather = await self.client.get_weather(

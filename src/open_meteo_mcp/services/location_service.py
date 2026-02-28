@@ -82,7 +82,7 @@ class LocationService(BaseService):
         )
 
         # Convert to dict
-        result = response.model_dump()
+        result: dict[str, Any] = response.model_dump()
 
         # Enrich each result
         if result.get("results"):
