@@ -2,7 +2,6 @@
 
 from typing import Any
 from .base import BaseService
-from ..client import OpenMeteoClient
 from ..helpers import (
     interpret_weather_code,
     format_temperature,

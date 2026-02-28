@@ -1,7 +1,6 @@
 """Test suite for REST API endpoints (FastAPI)."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from open_meteo_mcp.api.main import create_app

@@ -1,6 +1,6 @@
 """Base service class with common enrichment patterns."""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Callable, TypeVar
 
 from ..client import OpenMeteoClient

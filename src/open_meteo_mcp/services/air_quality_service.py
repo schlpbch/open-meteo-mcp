@@ -2,7 +2,6 @@
 
 from typing import Any
 from .base import BaseService
-from ..client import OpenMeteoClient
 
 # AQI interpretation threshold maps
 EUROPEAN_AQI_THRESHOLDS = [

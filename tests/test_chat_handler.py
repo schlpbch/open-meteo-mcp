@@ -1,9 +1,8 @@
 """Unit tests for chat handler."""
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 from open_meteo_mcp.chat.handler import ChatHandler
-from open_meteo_mcp.chat.sessions import ConversationSession
 
 
 @pytest.fixture

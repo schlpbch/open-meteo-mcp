@@ -186,11 +186,11 @@ class TestFormatWindDirection:
         # Just before NE
         assert format_wind_direction(22) == "N"
         # Just after NE
-        assert format_wind_direction(68) == "NE"
+        assert format_wind_direction(68) == "E"
 
     def test_negative_degrees(self):
         """Test negative degree normalization."""
-        assert format_wind_direction(-45) == "SW"
+        assert format_wind_direction(-45) == "NW"
         assert format_wind_direction(-90) == "W"
 
     def test_large_degrees(self):
@@ -492,7 +492,7 @@ class TestNormalizeAirQualityTimezone:
         assert result["hourly"]["pm2_5"] == [10, 15]
 
 
-class TestFormatWindDirection:
+class TestFormatWindDirectionEdgeCases:
     """Test wind direction formatting - additional edge cases."""
 
     def test_wind_direction_float_input(self):

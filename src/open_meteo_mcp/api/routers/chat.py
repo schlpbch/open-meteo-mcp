@@ -1,6 +1,6 @@
 """Chat API routes for conversational weather interface."""
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field

@@ -6,7 +6,7 @@ from anthropic import Anthropic
 
 from ..services import AirQualityService, LocationService, WeatherService
 from ..client import OpenMeteoClient
-from .sessions import ConversationSession, SessionManager
+from .sessions import SessionManager
 from .tools import get_all_tool_schemas
 
 
