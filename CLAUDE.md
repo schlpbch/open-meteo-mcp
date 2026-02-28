@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**open-meteo-mcp** (Python Extended Implementation) is a Model Context Protocol (MCP) server providing weather, snow conditions, air quality, and location services via the Open-Meteo API. This Python implementation extends the base functionality with a REST API and integrated chat interface.
+**open-meteo-mcp** is a Model Context Protocol (MCP) server providing weather, snow conditions, air quality, and location services via the Open-Meteo API. This Python implementation extends the base functionality with a REST API and integrated chat interface.
 
 - **Version**: 3.3.0
 - **Python**: 3.11+
