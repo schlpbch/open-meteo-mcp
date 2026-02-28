@@ -4,8 +4,8 @@ from typing import Any
 
 from anthropic import Anthropic
 
-from ..services import AirQualityService, LocationService, WeatherService
 from ..client import OpenMeteoClient
+from ..services import AirQualityService, LocationService, WeatherService
 from .sessions import SessionManager
 from .tools import get_all_tool_schemas
 

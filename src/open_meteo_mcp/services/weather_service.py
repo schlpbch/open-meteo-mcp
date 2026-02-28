@@ -1,13 +1,14 @@
 """Weather service with auto-enrichment."""
 
 from typing import Any
-from .base import BaseService
+
 from ..helpers import (
-    interpret_weather_code,
-    format_temperature,
-    calculate_wind_chill,
     assess_ski_conditions,
+    calculate_wind_chill,
+    format_temperature,
+    interpret_weather_code,
 )
+from .base import BaseService
 
 
 class WeatherService(BaseService):

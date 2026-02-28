@@ -5,9 +5,11 @@ Tests weather alerts functionality, timezone consistency, country filtering,
 and overall API improvements.
 """
 
-import pytest
-from unittest.mock import patch, Mock
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
 from src.open_meteo_mcp.client import OpenMeteoClient
 
 
@@ -424,7 +426,7 @@ class TestWeatherAlerts:
 
         alerts = []
 
-        for i, precip in enumerate(hourly["precipitation"]):
+        for _i, precip in enumerate(hourly["precipitation"]):
             if precip > 10:  # Heavy precipitation threshold
                 severity = "warning" if precip > 20 else "watch"
                 alert = {

@@ -1,7 +1,8 @@
 """Helper functions for weather interpretation and formatting."""
 
-from typing import Dict, Any
 from datetime import datetime, timedelta
+from typing import Any
+
 import pytz  # type: ignore[import-untyped]
 
 
@@ -43,7 +44,7 @@ class AlertThresholds:
     FLOW_VERY_HIGH_MIN = 430
 
 
-def interpret_weather_code(code: int) -> Dict[str, Any]:
+def interpret_weather_code(code: int) -> dict[str, Any]:
     """
     Interpret WMO weather codes into human-readable descriptions.
 
@@ -173,7 +174,7 @@ def get_travel_impact(code: int) -> str:
 
 
 def assess_ski_conditions(
-    snow_data: Dict[str, Any], weather_data: Dict[str, Any]
+    snow_data: dict[str, Any], weather_data: dict[str, Any]
 ) -> str:
     """
     Assess ski conditions based on snow depth, snowfall, and weather.
@@ -333,11 +334,11 @@ def format_precipitation(mm: float) -> str:
 
 
 def generate_weather_alerts(
-    current: Dict[str, Any],
-    hourly: Dict[str, Any],
-    daily: Dict[str, Any],
+    current: dict[str, Any],
+    hourly: dict[str, Any],
+    daily: dict[str, Any],
     timezone: str,
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Generate weather alerts based on thresholds.
 
@@ -352,7 +353,7 @@ def generate_weather_alerts(
     """
     from datetime import datetime
 
-    alerts: list[Dict[str, Any]] = []
+    alerts: list[dict[str, Any]] = []
 
     if not current or not hourly or not daily:
         return alerts
@@ -567,8 +568,8 @@ def generate_weather_alerts(
 
 
 def normalize_timezone(
-    response_data: Dict[str, Any], target_timezone: str = "UTC"
-) -> Dict[str, Any]:
+    response_data: dict[str, Any], target_timezone: str = "UTC"
+) -> dict[str, Any]:
     """
     Normalize all timestamps in a weather/air quality response to a specified timezone.
 
@@ -639,8 +640,8 @@ def normalize_timezone(
 
 
 def normalize_air_quality_timezone(
-    air_quality_data: Dict[str, Any], weather_timezone: str = "UTC"
-) -> Dict[str, Any]:
+    air_quality_data: dict[str, Any], weather_timezone: str = "UTC"
+) -> dict[str, Any]:
     """
     Normalize air quality timestamps to match weather timezone.
 
@@ -695,7 +696,7 @@ def normalize_air_quality_timezone(
 
 def calculate_astronomy_data(
     latitude: float, longitude: float, timezone: str = "UTC"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate astronomical data for a location.
 
@@ -708,8 +709,8 @@ def calculate_astronomy_data(
         Dictionary with sunrise, sunset, golden hour, blue hour times
     """
     try:
-        from datetime import datetime, timedelta, time
         import math
+        from datetime import datetime, time, timedelta
 
         # Get current date
         now = datetime.now()
@@ -833,8 +834,8 @@ def calculate_astronomy_data(
 
 
 def calculate_comfort_index(
-    weather: Dict[str, Any], air_quality: Dict[str, Any] | None = None
-) -> Dict[str, Any]:
+    weather: dict[str, Any], air_quality: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """
     Calculate a comfort index for outdoor activities (0-100).
 

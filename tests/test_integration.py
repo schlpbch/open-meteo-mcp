@@ -1,13 +1,14 @@
 """Integration tests for core functionality and message flows."""
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from open_meteo_mcp.chat.handler import ChatHandler
 from open_meteo_mcp.chat.sessions import ConversationSession, SessionManager
-from open_meteo_mcp.services import WeatherService, AirQualityService, LocationService
 from open_meteo_mcp.client import OpenMeteoClient
+from open_meteo_mcp.services import AirQualityService, LocationService, WeatherService
 
 
 class TestChatSessions:
@@ -235,7 +236,7 @@ class TestErrorHandlingPaths:
         mock_client.get_weather.side_effect = Exception("API error")
 
         service = WeatherService(mock_client)
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             await service.get_weather_enriched(47.0, 8.0)
 
     @pytest.mark.asyncio

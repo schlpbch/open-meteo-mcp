@@ -1,15 +1,16 @@
 """Test suite for service layer (WeatherService, AirQualityService, LocationService)."""
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from open_meteo_mcp.client import OpenMeteoClient
 from open_meteo_mcp.services import (
-    WeatherService,
     AirQualityService,
     LocationService,
+    WeatherService,
 )
-from open_meteo_mcp.client import OpenMeteoClient
 
 
 class TestWeatherServiceEnrichment:

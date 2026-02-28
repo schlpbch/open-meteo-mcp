@@ -1,14 +1,14 @@
 """Base service class with common enrichment patterns."""
 
-from abc import ABC
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from ..client import OpenMeteoClient
 
 T = TypeVar("T")
 
 
-class BaseService(ABC):
+class BaseService:
     """Abstract base service providing common initialization and enrichment patterns.
 
     Provides:

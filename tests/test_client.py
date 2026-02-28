@@ -4,7 +4,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from open_meteo_mcp.client import OpenMeteoClient
-from open_meteo_mcp.models import WeatherForecast, SnowConditions
+from open_meteo_mcp.models import SnowConditions, WeatherForecast
 
 
 @pytest.mark.asyncio
@@ -153,7 +153,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=500)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):  # httpx.HTTPStatusError
+            with pytest.raises(Exception):  # noqa: B017  # httpx.HTTPStatusError
                 await client.get_weather(latitude=46.9479, longitude=7.4474)
 
     async def test_get_weather_invalid_response(self, httpx_mock: HTTPXMock):
@@ -220,7 +220,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=503)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):  # httpx.HTTPStatusError
+            with pytest.raises(Exception):  # noqa: B017  # httpx.HTTPStatusError
                 await client.get_snow_conditions(latitude=45.9763, longitude=7.6586)
 
     async def test_get_snow_conditions_invalid_response(self, httpx_mock: HTTPXMock):
@@ -335,7 +335,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=429)  # Rate limited
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await client.get_air_quality(latitude=46.9479, longitude=7.4474)
 
     async def test_get_air_quality_invalid_response(self, httpx_mock: HTTPXMock):
@@ -437,7 +437,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=503)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await client.search_location(name="Test")
 
     async def test_search_location_invalid_response(self, httpx_mock: HTTPXMock):
@@ -531,7 +531,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=400)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await client.get_historical_weather(
                     latitude=46.9479,
                     longitude=7.4474,
@@ -629,7 +629,7 @@ class TestOpenMeteoClient:
         httpx_mock.add_response(status_code=502)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await client.get_marine_conditions(latitude=47.2, longitude=8.5)
 
     async def test_get_marine_conditions_invalid_response(self, httpx_mock: HTTPXMock):

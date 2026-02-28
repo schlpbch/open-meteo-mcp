@@ -1,7 +1,6 @@
 """Pydantic models for Open-Meteo API requests and responses."""
 
-from typing import Optional, List
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # Location Model
@@ -86,37 +85,37 @@ class HourlyWeather(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(
+    time: list[str] = Field(
         default_factory=list, description="Timestamps for each hour"
     )
-    temperature_2m: List[float] = Field(
+    temperature_2m: list[float] = Field(
         default_factory=list, description="Temperature at 2m height (°C)"
     )
-    apparent_temperature: Optional[List[float]] = Field(
+    apparent_temperature: list[float] | None = Field(
         None, description="Apparent temperature / feels like (°C)"
     )
-    precipitation: List[float] = Field(
+    precipitation: list[float] = Field(
         default_factory=list, description="Precipitation (mm)"
     )
-    precipitation_probability: Optional[List[int]] = Field(
+    precipitation_probability: list[int] | None = Field(
         None, description="Precipitation probability (%)"
     )
-    weather_code: List[int] = Field(
+    weather_code: list[int] = Field(
         default_factory=list, description="WMO weather codes"
     )
-    wind_speed_10m: List[float] = Field(
+    wind_speed_10m: list[float] = Field(
         default_factory=list, description="Wind speed at 10m (km/h)"
     )
-    wind_gusts_10m: Optional[List[float]] = Field(
+    wind_gusts_10m: list[float] | None = Field(
         None, description="Wind gusts at 10m (km/h)"
     )
-    relative_humidity_2m: Optional[List[int]] = Field(
+    relative_humidity_2m: list[int] | None = Field(
         None, description="Relative humidity (%)"
     )
-    cloud_cover: Optional[List[int]] = Field(None, description="Cloud cover (%)")
-    visibility: Optional[List[float]] = Field(None, description="Visibility (m)")
-    uv_index: Optional[List[float]] = Field(None, description="UV index")
-    is_day: Optional[List[int]] = Field(None, description="Day (1) or night (0)")
+    cloud_cover: list[int] | None = Field(None, description="Cloud cover (%)")
+    visibility: list[float] | None = Field(None, description="Visibility (m)")
+    uv_index: list[float] | None = Field(None, description="UV index")
+    is_day: list[int] | None = Field(None, description="Day (1) or night (0)")
 
 
 # Response Models - Daily Weather
@@ -125,32 +124,32 @@ class DailyWeather(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(default_factory=list, description="Dates for each day")
-    temperature_2m_max: List[float] = Field(
+    time: list[str] = Field(default_factory=list, description="Dates for each day")
+    temperature_2m_max: list[float] = Field(
         default_factory=list, description="Maximum temperature (°C)"
     )
-    temperature_2m_min: List[float] = Field(
+    temperature_2m_min: list[float] = Field(
         default_factory=list, description="Minimum temperature (°C)"
     )
-    precipitation_sum: List[float] = Field(
+    precipitation_sum: list[float] = Field(
         default_factory=list, description="Total precipitation (mm)"
     )
-    precipitation_probability_max: Optional[List[int]] = Field(
+    precipitation_probability_max: list[int] | None = Field(
         None, description="Maximum precipitation probability (%)"
     )
-    precipitation_hours: Optional[List[float]] = Field(
+    precipitation_hours: list[float] | None = Field(
         None, description="Hours with precipitation"
     )
-    weather_code: List[int] = Field(
+    weather_code: list[int] = Field(
         default_factory=list, description="WMO weather codes"
     )
-    sunrise: Optional[List[str]] = Field(None, description="Sunrise times")
-    sunset: Optional[List[str]] = Field(None, description="Sunset times")
-    uv_index_max: Optional[List[float]] = Field(None, description="Maximum UV index")
-    wind_speed_10m_max: Optional[List[float]] = Field(
+    sunrise: list[str] | None = Field(None, description="Sunrise times")
+    sunset: list[str] | None = Field(None, description="Sunset times")
+    uv_index_max: list[float] | None = Field(None, description="Maximum UV index")
+    wind_speed_10m_max: list[float] | None = Field(
         None, description="Maximum wind speed (km/h)"
     )
-    wind_gusts_10m_max: Optional[List[float]] = Field(
+    wind_gusts_10m_max: list[float] | None = Field(
         None, description="Maximum wind gusts (km/h)"
     )
 
@@ -163,17 +162,15 @@ class WeatherForecast(BaseModel):
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
+    elevation: float | None = Field(None, description="Elevation in meters")
     timezone: str = Field(..., description="Timezone name")
-    timezone_abbreviation: Optional[str] = Field(
-        None, description="Timezone abbreviation"
-    )
-    utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
-    current_weather: Optional[CurrentWeather] = Field(
+    timezone_abbreviation: str | None = Field(None, description="Timezone abbreviation")
+    utc_offset_seconds: int | None = Field(None, description="UTC offset in seconds")
+    current_weather: CurrentWeather | None = Field(
         None, description="Current weather conditions"
     )
-    hourly: Optional[HourlyWeather] = Field(None, description="Hourly forecast data")
-    daily: Optional[DailyWeather] = Field(None, description="Daily forecast data")
+    hourly: HourlyWeather | None = Field(None, description="Hourly forecast data")
+    daily: DailyWeather | None = Field(None, description="Daily forecast data")
 
 
 # Response Models - Hourly Snow
@@ -182,30 +179,30 @@ class HourlySnow(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(
+    time: list[str] = Field(
         default_factory=list, description="Timestamps for each hour"
     )
-    temperature_2m: List[float] = Field(
+    temperature_2m: list[float] = Field(
         default_factory=list, description="Temperature at 2m (°C)"
     )
-    apparent_temperature: Optional[List[float]] = Field(
+    apparent_temperature: list[float] | None = Field(
         None, description="Apparent temperature / wind chill (°C)"
     )
-    snowfall: List[float] = Field(
+    snowfall: list[float] = Field(
         default_factory=list, description="Snowfall amount (cm)"
     )
-    snow_depth: List[float] = Field(default_factory=list, description="Snow depth (m)")
-    weather_code: List[int] = Field(
+    snow_depth: list[float] = Field(default_factory=list, description="Snow depth (m)")
+    weather_code: list[int] = Field(
         default_factory=list, description="WMO weather codes"
     )
-    wind_speed_10m: Optional[List[float]] = Field(
+    wind_speed_10m: list[float] | None = Field(
         None, description="Wind speed at 10m (km/h)"
     )
-    wind_gusts_10m: Optional[List[float]] = Field(
+    wind_gusts_10m: list[float] | None = Field(
         None, description="Wind gusts at 10m (km/h)"
     )
-    cloud_cover: Optional[List[int]] = Field(None, description="Cloud cover (%)")
-    precipitation_probability: Optional[List[int]] = Field(
+    cloud_cover: list[int] | None = Field(None, description="Cloud cover (%)")
+    precipitation_probability: list[int] | None = Field(
         None, description="Precipitation probability (%)"
     )
 
@@ -216,23 +213,23 @@ class DailySnow(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(default_factory=list, description="Dates for each day")
-    temperature_2m_max: List[float] = Field(
+    time: list[str] = Field(default_factory=list, description="Dates for each day")
+    temperature_2m_max: list[float] = Field(
         default_factory=list, description="Maximum temperature (°C)"
     )
-    temperature_2m_min: List[float] = Field(
+    temperature_2m_min: list[float] = Field(
         default_factory=list, description="Minimum temperature (°C)"
     )
-    snowfall_sum: List[float] = Field(
+    snowfall_sum: list[float] = Field(
         default_factory=list, description="Total snowfall (cm)"
     )
-    snow_depth_max: Optional[List[float]] = Field(
+    snow_depth_max: list[float] | None = Field(
         None, description="Maximum snow depth (m)"
     )
-    precipitation_probability_max: Optional[List[int]] = Field(
+    precipitation_probability_max: list[int] | None = Field(
         None, description="Maximum precipitation probability (%)"
     )
-    wind_gusts_10m_max: Optional[List[float]] = Field(
+    wind_gusts_10m_max: list[float] | None = Field(
         None, description="Maximum wind gusts (km/h)"
     )
 
@@ -244,35 +241,27 @@ class GeocodingResult(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    id: Optional[int] = Field(None, description="Location ID")
+    id: int | None = Field(None, description="Location ID")
     name: str = Field(..., description="Location name")
     latitude: float = Field(..., description="Latitude in decimal degrees")
     longitude: float = Field(..., description="Longitude in decimal degrees")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
-    feature_code: Optional[str] = Field(None, description="GeoNames feature code")
-    country_code: Optional[str] = Field(
+    elevation: float | None = Field(None, description="Elevation in meters")
+    feature_code: str | None = Field(None, description="GeoNames feature code")
+    country_code: str | None = Field(
         None, description="ISO 3166-1 alpha-2 country code"
     )
-    country: Optional[str] = Field(None, description="Country name")
-    country_id: Optional[int] = Field(None, description="Country ID")
-    timezone: Optional[str] = Field(None, description="Timezone name")
-    population: Optional[int] = Field(None, description="Population")
-    admin1: Optional[str] = Field(
-        None, description="First-level administrative division"
-    )
-    admin2: Optional[str] = Field(
-        None, description="Second-level administrative division"
-    )
-    admin3: Optional[str] = Field(
-        None, description="Third-level administrative division"
-    )
-    admin4: Optional[str] = Field(
-        None, description="Fourth-level administrative division"
-    )
-    admin1_id: Optional[int] = Field(None, description="Admin1 ID")
-    admin2_id: Optional[int] = Field(None, description="Admin2 ID")
-    admin3_id: Optional[int] = Field(None, description="Admin3 ID")
-    admin4_id: Optional[int] = Field(None, description="Admin4 ID")
+    country: str | None = Field(None, description="Country name")
+    country_id: int | None = Field(None, description="Country ID")
+    timezone: str | None = Field(None, description="Timezone name")
+    population: int | None = Field(None, description="Population")
+    admin1: str | None = Field(None, description="First-level administrative division")
+    admin2: str | None = Field(None, description="Second-level administrative division")
+    admin3: str | None = Field(None, description="Third-level administrative division")
+    admin4: str | None = Field(None, description="Fourth-level administrative division")
+    admin1_id: int | None = Field(None, description="Admin1 ID")
+    admin2_id: int | None = Field(None, description="Admin2 ID")
+    admin3_id: int | None = Field(None, description="Admin3 ID")
+    admin4_id: int | None = Field(None, description="Admin4 ID")
 
 
 class GeocodingResponse(BaseModel):
@@ -280,10 +269,10 @@ class GeocodingResponse(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    results: Optional[List[GeocodingResult]] = Field(
+    results: list[GeocodingResult] | None = Field(
         None, description="List of matching locations"
     )
-    generationtime_ms: Optional[float] = Field(
+    generationtime_ms: float | None = Field(
         None, description="API generation time in milliseconds"
     )
 
@@ -294,16 +283,16 @@ class CurrentAirQuality(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: Optional[str] = Field(None, description="Timestamp of observation")
-    european_aqi: Optional[int] = Field(
+    time: str | None = Field(None, description="Timestamp of observation")
+    european_aqi: int | None = Field(
         None, description="European Air Quality Index (0-100+)"
     )
-    us_aqi: Optional[int] = Field(
+    us_aqi: int | None = Field(
         None, description="United States Air Quality Index (0-500)"
     )
-    pm10: Optional[float] = Field(None, description="Particulate matter PM10 (μg/m³)")
-    pm2_5: Optional[float] = Field(None, description="Particulate matter PM2.5 (μg/m³)")
-    uv_index: Optional[float] = Field(None, description="UV index")
+    pm10: float | None = Field(None, description="Particulate matter PM10 (μg/m³)")
+    pm2_5: float | None = Field(None, description="Particulate matter PM2.5 (μg/m³)")
+    uv_index: float | None = Field(None, description="UV index")
 
 
 class HourlyAirQuality(BaseModel):
@@ -311,53 +300,53 @@ class HourlyAirQuality(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(
+    time: list[str] = Field(
         default_factory=list, description="Timestamps for each hour"
     )
-    european_aqi: Optional[List[int]] = Field(
+    european_aqi: list[int] | None = Field(
         None, description="European Air Quality Index"
     )
-    us_aqi: Optional[List[int]] = Field(
+    us_aqi: list[int] | None = Field(
         None, description="United States Air Quality Index"
     )
-    pm10: Optional[List[float]] = Field(
+    pm10: list[float] | None = Field(
         None, description="Particulate matter PM10 (μg/m³)"
     )
-    pm2_5: Optional[List[float]] = Field(
+    pm2_5: list[float] | None = Field(
         None, description="Particulate matter PM2.5 (μg/m³)"
     )
-    carbon_monoxide: Optional[List[float]] = Field(
+    carbon_monoxide: list[float] | None = Field(
         None, description="Carbon monoxide (μg/m³)"
     )
-    nitrogen_dioxide: Optional[List[float]] = Field(
+    nitrogen_dioxide: list[float] | None = Field(
         None, description="Nitrogen dioxide (μg/m³)"
     )
-    sulphur_dioxide: Optional[List[float]] = Field(
+    sulphur_dioxide: list[float] | None = Field(
         None, description="Sulphur dioxide (μg/m³)"
     )
-    ozone: Optional[List[float]] = Field(None, description="Ozone (μg/m³)")
-    dust: Optional[List[float]] = Field(None, description="Dust (μg/m³)")
-    uv_index: Optional[List[float]] = Field(None, description="UV index")
-    uv_index_clear_sky: Optional[List[float]] = Field(
+    ozone: list[float] | None = Field(None, description="Ozone (μg/m³)")
+    dust: list[float] | None = Field(None, description="Dust (μg/m³)")
+    uv_index: list[float] | None = Field(None, description="UV index")
+    uv_index_clear_sky: list[float] | None = Field(
         None, description="UV index under clear sky"
     )
-    ammonia: Optional[List[float]] = Field(None, description="Ammonia (μg/m³)")
-    alder_pollen: Optional[List[float]] = Field(
+    ammonia: list[float] | None = Field(None, description="Ammonia (μg/m³)")
+    alder_pollen: list[float] | None = Field(
         None, description="Alder pollen (grains/m³)"
     )
-    birch_pollen: Optional[List[float]] = Field(
+    birch_pollen: list[float] | None = Field(
         None, description="Birch pollen (grains/m³)"
     )
-    grass_pollen: Optional[List[float]] = Field(
+    grass_pollen: list[float] | None = Field(
         None, description="Grass pollen (grains/m³)"
     )
-    mugwort_pollen: Optional[List[float]] = Field(
+    mugwort_pollen: list[float] | None = Field(
         None, description="Mugwort pollen (grains/m³)"
     )
-    olive_pollen: Optional[List[float]] = Field(
+    olive_pollen: list[float] | None = Field(
         None, description="Olive pollen (grains/m³)"
     )
-    ragweed_pollen: Optional[List[float]] = Field(
+    ragweed_pollen: list[float] | None = Field(
         None, description="Ragweed pollen (grains/m³)"
     )
 
@@ -369,16 +358,12 @@ class AirQualityForecast(BaseModel):
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
+    elevation: float | None = Field(None, description="Elevation in meters")
     timezone: str = Field(..., description="Timezone name")
-    timezone_abbreviation: Optional[str] = Field(
-        None, description="Timezone abbreviation"
-    )
-    utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
-    current: Optional[CurrentAirQuality] = Field(
-        None, description="Current air quality"
-    )
-    hourly: Optional[HourlyAirQuality] = Field(
+    timezone_abbreviation: str | None = Field(None, description="Timezone abbreviation")
+    utc_offset_seconds: int | None = Field(None, description="UTC offset in seconds")
+    current: CurrentAirQuality | None = Field(None, description="Current air quality")
+    hourly: HourlyAirQuality | None = Field(
         None, description="Hourly air quality forecast"
     )
 
@@ -391,14 +376,12 @@ class SnowConditions(BaseModel):
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
+    elevation: float | None = Field(None, description="Elevation in meters")
     timezone: str = Field(..., description="Timezone name")
-    timezone_abbreviation: Optional[str] = Field(
-        None, description="Timezone abbreviation"
-    )
-    utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
-    hourly: Optional[HourlySnow] = Field(None, description="Hourly snow data")
-    daily: Optional[DailySnow] = Field(None, description="Daily snow data")
+    timezone_abbreviation: str | None = Field(None, description="Timezone abbreviation")
+    utc_offset_seconds: int | None = Field(None, description="UTC offset in seconds")
+    hourly: HourlySnow | None = Field(None, description="Hourly snow data")
+    daily: DailySnow | None = Field(None, description="Daily snow data")
 
 
 # Response Models - Marine Conditions
@@ -407,32 +390,30 @@ class HourlyMarine(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(
+    time: list[str] = Field(
         default_factory=list, description="Timestamps for each hour"
     )
-    wave_height: Optional[List[float]] = Field(None, description="Wave height (m)")
-    wave_direction: Optional[List[int]] = Field(
+    wave_height: list[float] | None = Field(None, description="Wave height (m)")
+    wave_direction: list[int] | None = Field(
         None, description="Wave direction (degrees)"
     )
-    wave_period: Optional[List[float]] = Field(
-        None, description="Wave period (seconds)"
-    )
-    wind_wave_height: Optional[List[float]] = Field(
+    wave_period: list[float] | None = Field(None, description="Wave period (seconds)")
+    wind_wave_height: list[float] | None = Field(
         None, description="Wind wave height (m)"
     )
-    wind_wave_direction: Optional[List[int]] = Field(
+    wind_wave_direction: list[int] | None = Field(
         None, description="Wind wave direction (degrees)"
     )
-    wind_wave_period: Optional[List[float]] = Field(
+    wind_wave_period: list[float] | None = Field(
         None, description="Wind wave period (seconds)"
     )
-    swell_wave_height: Optional[List[float]] = Field(
+    swell_wave_height: list[float] | None = Field(
         None, description="Swell wave height (m)"
     )
-    swell_wave_direction: Optional[List[int]] = Field(
+    swell_wave_direction: list[int] | None = Field(
         None, description="Swell wave direction (degrees)"
     )
-    swell_wave_period: Optional[List[float]] = Field(
+    swell_wave_period: list[float] | None = Field(
         None, description="Swell wave period (seconds)"
     )
 
@@ -442,23 +423,23 @@ class DailyMarine(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    time: List[str] = Field(default_factory=list, description="Dates for each day")
-    wave_height_max: Optional[List[float]] = Field(
+    time: list[str] = Field(default_factory=list, description="Dates for each day")
+    wave_height_max: list[float] | None = Field(
         None, description="Maximum wave height (m)"
     )
-    wave_direction_dominant: Optional[List[int]] = Field(
+    wave_direction_dominant: list[int] | None = Field(
         None, description="Dominant wave direction (degrees)"
     )
-    wave_period_max: Optional[List[float]] = Field(
+    wave_period_max: list[float] | None = Field(
         None, description="Maximum wave period (seconds)"
     )
-    swell_wave_height_max: Optional[List[float]] = Field(
+    swell_wave_height_max: list[float] | None = Field(
         None, description="Maximum swell wave height (m)"
     )
-    swell_wave_direction_dominant: Optional[List[int]] = Field(
+    swell_wave_direction_dominant: list[int] | None = Field(
         None, description="Dominant swell wave direction (degrees)"
     )
-    swell_wave_period_max: Optional[List[float]] = Field(
+    swell_wave_period_max: list[float] | None = Field(
         None, description="Maximum swell wave period (seconds)"
     )
 
@@ -470,14 +451,12 @@ class MarineConditions(BaseModel):
 
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
-    elevation: Optional[float] = Field(None, description="Elevation in meters")
+    elevation: float | None = Field(None, description="Elevation in meters")
     timezone: str = Field(..., description="Timezone name")
-    timezone_abbreviation: Optional[str] = Field(
-        None, description="Timezone abbreviation"
-    )
-    utc_offset_seconds: Optional[int] = Field(None, description="UTC offset in seconds")
-    hourly: Optional[HourlyMarine] = Field(None, description="Hourly marine data")
-    daily: Optional[DailyMarine] = Field(None, description="Daily marine data")
+    timezone_abbreviation: str | None = Field(None, description="Timezone abbreviation")
+    utc_offset_seconds: int | None = Field(None, description="UTC offset in seconds")
+    hourly: HourlyMarine | None = Field(None, description="Hourly marine data")
+    daily: DailyMarine | None = Field(None, description="Daily marine data")
 
 
 # Response Models - Weather Alerts
@@ -491,7 +470,7 @@ class WeatherAlert(BaseModel):
     start: str = Field(..., description="Alert start time (ISO format)")
     end: str = Field(..., description="Alert end time (ISO format)")
     description: str = Field(..., description="Alert description")
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list, description="Safety recommendations"
     )
 
@@ -504,6 +483,6 @@ class WeatherAlertsResponse(BaseModel):
     latitude: float = Field(..., description="Latitude of the location")
     longitude: float = Field(..., description="Longitude of the location")
     timezone: str = Field(..., description="Timezone name")
-    alerts: List[WeatherAlert] = Field(
+    alerts: list[WeatherAlert] = Field(
         default_factory=list, description="List of active alerts"
     )

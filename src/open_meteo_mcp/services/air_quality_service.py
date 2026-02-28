@@ -1,6 +1,7 @@
 """Air quality service with enrichment."""
 
 from typing import Any
+
 from .base import BaseService
 
 # AQI interpretation threshold maps

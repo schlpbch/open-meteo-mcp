@@ -1,6 +1,6 @@
 """REST API routes for Open Meteo tools."""
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -25,7 +25,7 @@ class LocationSearchRequest(BaseModel):
     name: str = Field(..., description="Location name to search")
     count: int = Field(10, description="Number of results (1-100)", ge=1, le=100)
     language: str = Field("en", description="Language for results")
-    country: Optional[str] = Field(None, description="Optional country code filter")
+    country: str | None = Field(None, description="Optional country code filter")
 
 
 # Endpoint: GET /api/tools/weather
@@ -52,7 +52,9 @@ async def get_weather(
             timezone=timezone,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Weather service error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Weather service error: {str(e)}"
+        ) from e
 
 
 # Endpoint: GET /api/tools/snow-conditions
@@ -81,7 +83,7 @@ async def get_snow_conditions(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Snow conditions service error: {str(e)}"
-        )
+        ) from e
 
 
 # Endpoint: GET /api/tools/air-quality
@@ -110,7 +112,7 @@ async def get_air_quality(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Air quality service error: {str(e)}"
-        )
+        ) from e
 
 
 # Endpoint: POST /api/tools/search-location
@@ -128,4 +130,6 @@ async def search_location(request: LocationSearchRequest) -> dict[str, Any]:
             country=request.country or "",
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Location search error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Location search error: {str(e)}"
+        ) from e

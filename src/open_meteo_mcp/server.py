@@ -1,13 +1,15 @@
 """FastMCP server for Open Meteo weather and snow conditions."""
 
 import asyncio
-from typing import Any, cast
-from fastmcp import FastMCP
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Any, cast
+
+from fastmcp import FastMCP
+
 from .client import OpenMeteoClient
-from .models import WeatherForecast, AirQualityForecast
-from .services import WeatherService, AirQualityService, LocationService
+from .models import AirQualityForecast, WeatherForecast
+from .services import AirQualityService, LocationService, WeatherService
 
 # Initialize FastMCP server
 mcp = FastMCP("open_meteo")

@@ -1,7 +1,9 @@
 """Unit tests for chat handler."""
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+
 from open_meteo_mcp.chat.handler import ChatHandler
 
 
@@ -255,7 +257,7 @@ class TestErrorHandling:
             "create",
             side_effect=Exception("API Error"),
         ):
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 await chat_handler.process_message(session_id, "Hello")
 
 

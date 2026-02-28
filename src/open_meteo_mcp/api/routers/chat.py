@@ -59,7 +59,7 @@ async def send_message(
             message_count=result["message_count"],
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}") from e
 
 
 # Endpoint: GET /api/chat/sessions/{sessionId}/messages
@@ -79,7 +79,7 @@ async def get_session_messages(session_id: str) -> dict[str, Any]:
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error retrieving session: {str(e)}"
-        )
+        ) from e
 
 
 # Endpoint: DELETE /api/chat/sessions/{sessionId}
@@ -97,7 +97,9 @@ async def delete_session(session_id: str) -> dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting session: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting session: {str(e)}"
+        ) from e
 
 
 # Endpoint: GET /api/chat/health

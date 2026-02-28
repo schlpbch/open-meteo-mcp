@@ -1,16 +1,18 @@
 """Async HTTP client for Open-Meteo Weather API."""
 
+from collections.abc import Callable, Coroutine
+from functools import wraps
+from typing import Any, TypeVar
+
 import httpx
 import structlog
-from functools import wraps
-from typing import Optional, Any, Callable, TypeVar, Coroutine
 
 from .models import (
-    WeatherForecast,
-    SnowConditions,
     AirQualityForecast,
     GeocodingResponse,
     MarineConditions,
+    SnowConditions,
+    WeatherForecast,
 )
 
 logger = structlog.get_logger()
@@ -301,7 +303,7 @@ class OpenMeteoClient:
         name: str,
         count: int = 10,
         language: str = "en",
-        country: Optional[str] = None,
+        country: str | None = None,
     ) -> "GeocodingResponse":
         """
         Search for locations by name using geocoding API.

@@ -1,7 +1,8 @@
 """Integration tests for FastMCP server tools, resources, and prompts."""
 
-import pytest
 import json
+
+import pytest
 from fastmcp.client import Client
 
 from open_meteo_mcp.server import mcp
@@ -220,6 +221,7 @@ class TestServerToolExecution:
     async def test_get_weather_execution(self, monkeypatch):
         """Test get_weather tool executes and returns data."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         mock_result = MagicMock()
@@ -243,6 +245,7 @@ class TestServerToolExecution:
     async def test_get_snow_conditions_execution(self, monkeypatch):
         """Test get_snow_conditions tool executes and returns data."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         mock_result = MagicMock()
@@ -264,6 +267,7 @@ class TestServerToolExecution:
     async def test_search_location_execution(self, monkeypatch):
         """Test search_location tool executes and returns locations."""
         from unittest.mock import AsyncMock
+
         from open_meteo_mcp import server
 
         mock_result = {"results": [{"name": "Bern", "latitude": 46.95}]}
@@ -279,6 +283,7 @@ class TestServerToolExecution:
     async def test_get_air_quality_execution(self, monkeypatch):
         """Test get_air_quality tool executes and returns data."""
         from unittest.mock import AsyncMock
+
         from open_meteo_mcp import server
 
         mock_result = {"current": {"european_aqi": 25}, "hourly": []}
@@ -294,6 +299,7 @@ class TestServerToolExecution:
     async def test_get_weather_alerts_execution(self, monkeypatch):
         """Test get_weather_alerts tool executes and returns alerts."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         # Mock the client weather call
@@ -318,6 +324,7 @@ class TestServerToolExecution:
     async def test_get_historical_weather_execution(self, monkeypatch):
         """Test get_historical_weather tool executes and returns data."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         mock_result = MagicMock()
@@ -339,6 +346,7 @@ class TestServerToolExecution:
     async def test_get_marine_conditions_execution(self, monkeypatch):
         """Test get_marine_conditions tool executes and returns data."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         mock_result = MagicMock()
@@ -353,6 +361,7 @@ class TestServerToolExecution:
     async def test_get_comfort_index_execution(self, monkeypatch):
         """Test get_comfort_index tool executes and returns index."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         # Mock weather and air quality calls
@@ -379,6 +388,7 @@ class TestServerToolExecution:
     async def test_get_astronomy_execution(self, monkeypatch):
         """Test get_astronomy tool executes and returns data."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         # Mock the weather call and astronomy calculation
@@ -406,6 +416,7 @@ class TestServerToolExecution:
     async def test_search_location_swiss_execution(self, monkeypatch):
         """Test search_location_swiss tool executes and returns locations."""
         from unittest.mock import AsyncMock
+
         from open_meteo_mcp import server
 
         mock_result = {
@@ -425,6 +436,7 @@ class TestServerToolExecution:
     async def test_compare_locations_execution(self, monkeypatch):
         """Test compare_locations tool executes and returns comparison."""
         from unittest.mock import AsyncMock, MagicMock
+
         from open_meteo_mcp import server
 
         # Mock weather and air quality calls for comparison

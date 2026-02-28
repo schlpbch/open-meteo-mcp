@@ -4,15 +4,15 @@ import pytest
 from pydantic import ValidationError
 
 from open_meteo_mcp.models import (
-    WeatherInput,
-    SnowInput,
     CurrentWeather,
-    HourlyWeather,
-    DailyWeather,
-    WeatherForecast,
-    HourlySnow,
     DailySnow,
+    DailyWeather,
+    HourlySnow,
+    HourlyWeather,
     SnowConditions,
+    SnowInput,
+    WeatherForecast,
+    WeatherInput,
 )
 
 

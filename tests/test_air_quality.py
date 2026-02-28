@@ -278,7 +278,7 @@ class TestAirQuality:
         httpx_mock.add_response(status_code=503)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):  # httpx.HTTPStatusError
+            with pytest.raises(Exception):  # noqa: B017  # httpx.HTTPStatusError
                 await client.get_air_quality(latitude=47.3769, longitude=8.5417)
 
     async def test_get_air_quality_invalid_response(self, httpx_mock: HTTPXMock):
@@ -313,7 +313,7 @@ class TestAirQuality:
             (11.5, "Extreme"),
         ]
 
-        for uv_value, level in uv_levels:
+        for uv_value, _level in uv_levels:
             httpx_mock.add_response(
                 json={
                     "latitude": 47.3769,
@@ -346,7 +346,7 @@ class TestAirQuality:
             )
 
         async with OpenMeteoClient() as client:
-            for uv_value, level in uv_levels:
+            for uv_value, _level in uv_levels:
                 result = await client.get_air_quality(
                     latitude=47.3769, longitude=8.5417
                 )

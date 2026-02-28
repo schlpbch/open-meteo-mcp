@@ -192,7 +192,7 @@ class TestGeocoding:
         httpx_mock.add_response(status_code=500)
 
         async with OpenMeteoClient() as client:
-            with pytest.raises(Exception):  # httpx.HTTPStatusError
+            with pytest.raises(Exception):  # noqa: B017  # httpx.HTTPStatusError
                 await client.search_location(name="Test")
 
     async def test_search_location_invalid_response(self, httpx_mock: HTTPXMock):
