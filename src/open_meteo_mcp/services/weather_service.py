@@ -1,7 +1,7 @@
 """Weather service with auto-enrichment."""
 
 from typing import Any
-from ..client import OpenMeteoClient
+from .base import BaseService
 from ..helpers import (
     interpret_weather_code,
     format_temperature,
@@ -10,16 +10,8 @@ from ..helpers import (
 )
 
 
-class WeatherService:
+class WeatherService(BaseService):
     """Service for weather data with automatic enrichment."""
-
-    def __init__(self, client: OpenMeteoClient):
-        """Initialize weather service with client.
-
-        Args:
-            client: OpenMeteoClient instance
-        """
-        self.client = client
 
     async def get_weather_enriched(
         self,
@@ -56,51 +48,52 @@ class WeatherService:
         )
 
         # Convert to dict
-        result = forecast.model_dump()
+        result: dict[str, Any] = forecast.model_dump()
 
         # Enrich current weather if available
-        if result.get("current_weather"):
-            current = result["current_weather"]
-
-            # Add weather interpretation
-            if "weather_code" in current:
-                current["weather_interpretation"] = interpret_weather_code(
-                    current["weather_code"]
-                )
-
-            # Add formatted temperature
-            if "temperature" in current:
-                current["temperature_formatted"] = format_temperature(
-                    current["temperature"]
-                )
-
-            # Add wind chill if temperature and wind are available
+        def enrich_current(current: dict[str, Any]) -> None:
+            self._enrich_if_exists(
+                current,
+                "weather_code",
+                interpret_weather_code,
+                "weather_interpretation",
+            )
+            self._enrich_if_exists(
+                current,
+                "temperature",
+                format_temperature,
+                "temperature_formatted",
+            )
             if "temperature" in current and "windspeed" in current:
                 current["wind_chill"] = calculate_wind_chill(
                     current["temperature"],
                     current["windspeed"],
                 )
 
+        self._enrich_section(result, "current_weather", enrich_current)
+
         # Enrich daily forecast
-        if result.get("daily"):
-            daily = result["daily"]
+        def enrich_daily(daily: dict[str, Any]) -> None:
+            self._enrich_list_if_exists(
+                daily,
+                "weather_code",
+                interpret_weather_code,
+                "weather_interpretation",
+            )
+            self._enrich_list_if_exists(
+                daily,
+                "temperature_2m_max",
+                format_temperature,
+                "temperature_max_formatted",
+            )
+            self._enrich_list_if_exists(
+                daily,
+                "temperature_2m_min",
+                format_temperature,
+                "temperature_min_formatted",
+            )
 
-            # Add weather interpretations to daily forecasts
-            if "weather_code" in daily and daily["weather_code"]:
-                daily["weather_interpretation"] = [
-                    interpret_weather_code(code) for code in daily["weather_code"]
-                ]
-
-            # Format temperature ranges
-            if "temperature_2m_max" in daily and daily["temperature_2m_max"]:
-                daily["temperature_max_formatted"] = [
-                    format_temperature(t) for t in daily["temperature_2m_max"]
-                ]
-
-            if "temperature_2m_min" in daily and daily["temperature_2m_min"]:
-                daily["temperature_min_formatted"] = [
-                    format_temperature(t) for t in daily["temperature_2m_min"]
-                ]
+        self._enrich_section(result, "daily", enrich_daily)
 
         return result
 
@@ -139,7 +132,7 @@ class WeatherService:
         )
 
         # Convert to dict
-        result = conditions.model_dump()
+        result: dict[str, Any] = conditions.model_dump()
 
         # Get weather data for enrichment
         weather = await self.client.get_weather(
@@ -157,15 +150,19 @@ class WeatherService:
             weather_current = weather_data["current_weather"]
 
             # Add ski condition assessment
-            current["ski_assessment"] = assess_ski_conditions(
-                current, weather_current
-            )
+            current["ski_assessment"] = assess_ski_conditions(current, weather_current)
 
             # Format temperature
-            if "temperature_2m" in weather_current:
-                current["temperature_formatted"] = format_temperature(
-                    weather_current["temperature_2m"]
-                )
+            self._enrich_if_exists(
+                weather_current,
+                "temperature_2m",
+                format_temperature,
+                "temperature_formatted",
+            )
+            if "temperature_formatted" in weather_current:
+                current["temperature_formatted"] = weather_current[
+                    "temperature_formatted"
+                ]
 
         # Enrich daily snow forecast
         if result.get("daily") and weather_data.get("daily"):
@@ -173,10 +170,15 @@ class WeatherService:
             daily_weather = weather_data["daily"]
 
             # Add weather interpretations
-            if "weather_code" in daily_weather and daily_weather["weather_code"]:
-                daily_snow["weather_interpretation"] = [
-                    interpret_weather_code(code)
-                    for code in daily_weather["weather_code"]
+            self._enrich_list_if_exists(
+                daily_weather,
+                "weather_code",
+                interpret_weather_code,
+                "weather_interpretation",
+            )
+            if "weather_interpretation" in daily_weather:
+                daily_snow["weather_interpretation"] = daily_weather[
+                    "weather_interpretation"
                 ]
 
         return result

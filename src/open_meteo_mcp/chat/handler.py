@@ -6,7 +6,7 @@ from anthropic import Anthropic
 
 from ..services import AirQualityService, LocationService, WeatherService
 from ..client import OpenMeteoClient
-from .sessions import ConversationSession, SessionManager
+from .sessions import SessionManager
 from .tools import get_all_tool_schemas
 
 
@@ -74,7 +74,9 @@ class ChatHandler:
 
             # Handle tool use
             if response.stop_reason == "tool_use":
-                tool_uses = [block for block in response.content if block.type == "tool_use"]
+                tool_uses = [
+                    block for block in response.content if block.type == "tool_use"
+                ]
 
                 # Add assistant response to session (includes tool use blocks)
                 assistant_message = {
@@ -106,7 +108,9 @@ class ChatHandler:
                             "error": str(e),
                         }
                         tool_results.append(error_result)
-                        session.add_tool_result(tool_use_id, tool_name, f"Error: {str(e)}")
+                        session.add_tool_result(
+                            tool_use_id, tool_name, f"Error: {str(e)}"
+                        )
             else:
                 # Unexpected stop reason
                 break

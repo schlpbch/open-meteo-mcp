@@ -16,7 +16,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Open Meteo MCP API",
         description="REST API for weather, snow conditions, air quality, and location search",
-        version="3.2.0",
+        version="3.3.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
     )
@@ -52,7 +52,7 @@ def create_app() -> FastAPI:
             status_code=200,
             content={
                 "status": "healthy",
-                "version": "3.2.0",
+                "version": "3.3.0",
                 "timestamp": datetime.now().isoformat(),
             },
         )
@@ -69,7 +69,7 @@ def create_app() -> FastAPI:
             status_code=200,
             content={
                 "message": "Open Meteo MCP REST API",
-                "version": "3.2.0",
+                "version": "3.3.0",
                 "docs": "/api/docs",
                 "openapi": "/api/openapi.json",
                 "health": "/api/health",

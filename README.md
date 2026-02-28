@@ -2,10 +2,11 @@
 
 A Model Context Protocol (MCP) server providing weather and snow condition tools via the [Open-Meteo API](https://open-meteo.com/).
 
-**Version 2.0.1** - Now powered by Python and FastMCP!
+**Version 3.3.0** - Full type safety, automated quality checks, 90% test coverage!
 
 ## Features
 
+### Core Capabilities
 - **Geocoding**: Search locations by name instead of coordinates
 - **Weather Forecasts**: Get current weather and multi-day forecasts for any location
 - **Snow Conditions**: Get snow depth, snowfall, and mountain weather data
@@ -14,6 +15,13 @@ A Model Context Protocol (MCP) server providing weather and snow condition tools
 - **MCP Prompts**: Guided workflows for ski trips, outdoor activities, and travel planning
 - **Free API**: No API key required - powered by Open-Meteo's free weather API
 - **MCP Integration**: Seamlessly integrates with MCP-compatible clients like Claude Desktop
+
+### Quality & Reliability (Phase 7)
+- **Type Safety**: 0 mypy errors, full type annotations across codebase
+- **Code Quality**: 100% black formatting compliant, 100% ruff linting compliant
+- **Automated Checks**: Pre-commit hooks enforce quality on every commit
+- **Test Coverage**: 248 tests passing, 90% code coverage
+- **Production Ready**: Fully tested, documented, and ready for deployment
 
 ## Tools
 

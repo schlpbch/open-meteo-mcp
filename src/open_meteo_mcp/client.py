@@ -2,8 +2,8 @@
 
 import httpx
 import structlog
-from typing import Optional, Any
-from swiss_ai_mcp_commons.serialization import JsonSerializableMixin
+from functools import wraps
+from typing import Optional, Any, Callable, TypeVar, Coroutine
 
 from .models import (
     WeatherForecast,
@@ -15,8 +15,63 @@ from .models import (
 
 logger = structlog.get_logger()
 
+# Type variable for async functions
+T = TypeVar("T")
 
-class OpenMeteoClient(JsonSerializableMixin):
+
+def handle_api_errors(operation_name: str, error_message_prefix: str) -> Callable:
+    """
+    Decorator for handling API errors with consistent logging and error conversion.
+
+    Args:
+        operation_name: Name of the operation (e.g., "weather", "snow_conditions")
+        error_message_prefix: Prefix for error messages (e.g., "Failed to parse weather data")
+
+    Returns:
+        Decorated async function with standardized error handling
+    """
+
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        @wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> T:
+            client_self = args[0]  # First arg is always 'self'
+            try:
+                result = await func(*args, **kwargs)
+                client_self.logger.debug(
+                    f"{operation_name}_fetched_successfully",
+                    **{
+                        k: v
+                        for k, v in kwargs.items()
+                        if k in ["latitude", "longitude", "name"]
+                    },
+                )
+                return result
+            except httpx.HTTPStatusError as e:
+                client_self.logger.error(
+                    f"{operation_name}_http_error",
+                    status_code=e.response.status_code,
+                    error=str(e),
+                )
+                raise
+            except httpx.HTTPError as e:
+                client_self.logger.error(
+                    f"{operation_name}_request_error", error=str(e)
+                )
+                raise
+            except Exception as e:
+                client_self.logger.error(
+                    f"{operation_name}_unexpected_error", error=str(e)
+                )
+                raise ValueError(f"{error_message_prefix}: {e}") from e
+
+        return wrapper
+
+    return decorator
+
+
+class OpenMeteoClient:
     """
     Client for the Open-Meteo Weather API.
 
@@ -43,10 +98,11 @@ class OpenMeteoClient(JsonSerializableMixin):
             base_url=self.BASE_URL,
             timeout=timeout,
             follow_redirects=True,
-            headers={"User-Agent": "open-meteo-mcp/2.0.0"},
+            headers={"User-Agent": "open-meteo-mcp/3.3.0"},
         )
         self.logger = logger.bind(component="OpenMeteoClient")
 
+    @handle_api_errors("weather", "Failed to parse weather data")
     async def get_weather(
         self,
         latitude: float,
@@ -94,31 +150,13 @@ class OpenMeteoClient(JsonSerializableMixin):
                 "temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_gusts_10m,relative_humidity_2m,cloud_cover,visibility,uv_index,is_day"
             )
 
-        try:
-            response = await self.client.get("/forecast", params=params)
-            response.raise_for_status()
+        response = await self.client.get("/forecast", params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            self.logger.debug(
-                "weather_fetched_successfully", latitude=latitude, longitude=longitude
-            )
+        data = response.json()
+        return WeatherForecast(**data)
 
-            return WeatherForecast(**data)
-
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "weather_api_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("weather_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("weather_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse weather data: {e}") from e
-
+    @handle_api_errors("snow_conditions", "Failed to parse snow data")
     async def get_snow_conditions(
         self,
         latitude: float,
@@ -165,31 +203,13 @@ class OpenMeteoClient(JsonSerializableMixin):
                 "snowfall,snow_depth,temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,cloud_cover,precipitation_probability"
             )
 
-        try:
-            response = await self.client.get("/forecast", params=params)
-            response.raise_for_status()
+        response = await self.client.get("/forecast", params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            self.logger.debug(
-                "snow_conditions_fetched_successfully",
-                latitude=latitude,
-                longitude=longitude,
-            )
+        data = response.json()
+        return SnowConditions(**data)
 
-            return SnowConditions(**data)
-
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "snow_api_http_error", status_code=e.response.status_code, error=str(e)
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("snow_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("snow_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse snow data: {e}") from e
-
+    @handle_api_errors("air_quality", "Failed to parse air quality data")
     async def get_air_quality(
         self,
         latitude: float,
@@ -263,35 +283,15 @@ class OpenMeteoClient(JsonSerializableMixin):
             "hourly": ",".join(hourly_params),
         }
 
-        try:
-            # Use air quality API base URL
-            air_quality_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
-            response = await self.client.get(air_quality_url, params=params)
-            response.raise_for_status()
+        # Use air quality API base URL
+        air_quality_url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+        response = await self.client.get(air_quality_url, params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            self.logger.debug(
-                "air_quality_fetched_successfully",
-                latitude=latitude,
-                longitude=longitude,
-            )
+        data = response.json()
+        return AirQualityForecast(**data)
 
-            return AirQualityForecast(**data)
-
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "air_quality_api_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("air_quality_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("air_quality_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse air quality data: {e}") from e
-
+    @handle_api_errors("location_search", "Failed to parse geocoding data")
     async def search_location(
         self,
         name: str,
@@ -336,59 +336,43 @@ class OpenMeteoClient(JsonSerializableMixin):
         if country:
             params["country"] = country
 
-        try:
-            # Use geocoding API base URL
-            geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
-            response = await self.client.get(geocoding_url, params=params)
-            response.raise_for_status()
+        # Use geocoding API base URL
+        geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
+        response = await self.client.get(geocoding_url, params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            results = data.get("results", [])
+        data = response.json()
+        results = data.get("results", [])
 
-            # FIX: Apply client-side country filtering if country is specified
-            # The API's country parameter acts as a "bias" not a strict filter
-            if country and results:
-                country_upper = country.upper()
-                filtered_results = [
-                    r
-                    for r in results
-                    if r.get("country_code", "").upper() == country_upper
-                ]
-                # If we have matches after filtering, use them; otherwise return all
-                if filtered_results:
-                    results = filtered_results
-                    self.logger.debug(
-                        "location_search_country_filtered",
-                        name=name,
-                        country=country,
-                        filtered_count=len(results),
-                    )
+        # FIX: Apply client-side country filtering if country is specified
+        # The API's country parameter acts as a "bias" not a strict filter
+        if country and results:
+            country_upper = country.upper()
+            filtered_results = [
+                r for r in results if r.get("country_code", "").upper() == country_upper
+            ]
+            # If we have matches after filtering, use them; otherwise return all
+            if filtered_results:
+                results = filtered_results
+                self.logger.debug(
+                    "location_search_country_filtered",
+                    name=name,
+                    country=country,
+                    filtered_count=len(results),
+                )
 
-            self.logger.debug(
-                "location_search_completed",
-                name=name,
-                results_count=len(results) if results is not None else 0,
-            )
+        self.logger.debug(
+            "location_search_completed",
+            name=name,
+            results_count=len(results) if results is not None else 0,
+        )
 
-            # Return the response with filtered results
-            return GeocodingResponse(
-                results=results, generationtime_ms=data.get("generationtime_ms")
-            )
+        # Return the response with filtered results
+        return GeocodingResponse(
+            results=results, generationtime_ms=data.get("generationtime_ms")
+        )
 
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "geocoding_api_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("geocoding_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("geocoding_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse geocoding data: {e}") from e
-
+    @handle_api_errors("historical_weather", "Failed to parse historical weather data")
     async def get_historical_weather(
         self,
         latitude: float,
@@ -441,33 +425,13 @@ class OpenMeteoClient(JsonSerializableMixin):
                 "temperature_2m,precipitation,weather_code,wind_speed_10m,relative_humidity_2m,cloud_cover"
             )
 
-        try:
-            response = await self.client.get("/archive", params=params)
-            response.raise_for_status()
+        response = await self.client.get("/archive", params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            self.logger.debug(
-                "historical_weather_fetched_successfully",
-                latitude=latitude,
-                longitude=longitude,
-            )
+        data = response.json()
+        return WeatherForecast(**data)
 
-            return WeatherForecast(**data)
-
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "historical_weather_api_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("historical_weather_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("historical_weather_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse historical weather data: {e}") from e
-
+    @handle_api_errors("marine_conditions", "Failed to parse marine data")
     async def get_marine_conditions(
         self,
         latitude: float,
@@ -517,32 +481,11 @@ class OpenMeteoClient(JsonSerializableMixin):
                 "wave_height,wave_direction,wave_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period"
             )
 
-        try:
-            response = await self.client.get(marine_url, params=params)
-            response.raise_for_status()
+        response = await self.client.get(marine_url, params=params)
+        response.raise_for_status()
 
-            data = response.json()
-            self.logger.debug(
-                "marine_conditions_fetched_successfully",
-                latitude=latitude,
-                longitude=longitude,
-            )
-
-            return MarineConditions(**data)
-
-        except httpx.HTTPStatusError as e:
-            self.logger.error(
-                "marine_api_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("marine_api_request_error", error=str(e))
-            raise
-        except Exception as e:
-            self.logger.error("marine_api_unexpected_error", error=str(e))
-            raise ValueError(f"Failed to parse marine data: {e}") from e
+        data = response.json()
+        return MarineConditions(**data)
 
     async def close(self) -> None:
         """Close the HTTP client and release resources."""
@@ -553,7 +496,9 @@ class OpenMeteoClient(JsonSerializableMixin):
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type: type, exc_val: BaseException, exc_tb: type) -> None:
+    async def __aexit__(
+        self, exc_type: type, exc_val: BaseException, exc_tb: type
+    ) -> None:
         """Async context manager exit."""
         await self.close()
 
@@ -570,5 +515,9 @@ class OpenMeteoClient(JsonSerializableMixin):
         """Convert client state to dictionary for JSON serialization."""
         return {
             "base_url": self.BASE_URL,
-            "timeout": float(self.client.timeout.total_seconds()) if hasattr(self.client.timeout, 'total_seconds') else self.client.timeout,
+            "timeout": (
+                float(self.client.timeout.total_seconds())
+                if hasattr(self.client.timeout, "total_seconds")
+                else self.client.timeout
+            ),
         }

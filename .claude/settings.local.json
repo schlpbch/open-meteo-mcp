@@ -18,7 +18,8 @@
       "Bash(fastmcp --version:*)",
       "Bash(dir:*)",
       "Bash(gh release:*)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(git add:*)"
     ]
   }
 }

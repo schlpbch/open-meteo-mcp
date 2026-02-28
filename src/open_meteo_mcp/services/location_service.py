@@ -1,19 +1,11 @@
 """Location service with enrichment."""
 
-from typing import Any, Optional
-from ..client import OpenMeteoClient
+from typing import Any
+from .base import BaseService
 
 
-class LocationService:
+class LocationService(BaseService):
     """Service for location search with automatic enrichment."""
-
-    def __init__(self, client: OpenMeteoClient):
-        """Initialize location service with client.
-
-        Args:
-            client: OpenMeteoClient instance
-        """
-        self.client = client
 
     def _enrich_location(self, location: dict[str, Any]) -> dict[str, Any]:
         """Enrich a single location result with metadata.
@@ -90,11 +82,13 @@ class LocationService:
         )
 
         # Convert to dict
-        result = response.model_dump()
+        result: dict[str, Any] = response.model_dump()
 
         # Enrich each result
         if result.get("results"):
-            result["results"] = [self._enrich_location(loc) for loc in result["results"]]
+            result["results"] = [
+                self._enrich_location(loc) for loc in result["results"]
+            ]
 
         return result
 
@@ -132,7 +126,9 @@ class LocationService:
         # Filter if needed
         if not include_features:
             results = [
-                r for r in results if not r.feature_code or r.feature_code.startswith("PPL")
+                r
+                for r in results
+                if not r.feature_code or r.feature_code.startswith("PPL")
             ]
 
         # Sort by population

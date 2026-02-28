@@ -4,13 +4,17 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from open_meteo_mcp.client import OpenMeteoClient
-from open_meteo_mcp.models import AirQualityForecast, CurrentAirQuality, HourlyAirQuality
+from open_meteo_mcp.models import (
+    AirQualityForecast,
+    CurrentAirQuality,
+    HourlyAirQuality,
+)
 
 
 @pytest.mark.asyncio
 class TestAirQuality:
     """Test air quality API calls."""
-    
+
     async def test_get_air_quality_success(self, httpx_mock: HTTPXMock):
         """Test successful air quality API call."""
         # Mock API response
@@ -28,7 +32,7 @@ class TestAirQuality:
                     "us_aqi": 65,
                     "pm10": 15.5,
                     "pm2_5": 8.2,
-                    "uv_index": 3.5
+                    "uv_index": 3.5,
                 },
                 "hourly": {
                     "time": ["2026-01-10T00:00", "2026-01-10T01:00"],
@@ -49,23 +53,20 @@ class TestAirQuality:
                     "grass_pollen": [12.5, 15.3],
                     "mugwort_pollen": [0.0, 0.0],
                     "olive_pollen": [0.0, 0.0],
-                    "ragweed_pollen": [0.0, 0.0]
-                }
+                    "ragweed_pollen": [0.0, 0.0],
+                },
             }
         )
-        
+
         async with OpenMeteoClient() as client:
             result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417,
-                forecast_days=5,
-                include_pollen=True
+                latitude=47.3769, longitude=8.5417, forecast_days=5, include_pollen=True
             )
-            
+
             assert isinstance(result, AirQualityForecast)
             assert result.latitude == 47.3769
             assert result.longitude == 8.5417
-            
+
             # Check current air quality
             assert result.current is not None
             assert isinstance(result.current, CurrentAirQuality)
@@ -74,7 +75,7 @@ class TestAirQuality:
             assert result.current.pm10 == 15.5
             assert result.current.pm2_5 == 8.2
             assert result.current.uv_index == 3.5
-            
+
             # Check hourly forecast
             assert result.hourly is not None
             assert isinstance(result.hourly, HourlyAirQuality)
@@ -83,17 +84,17 @@ class TestAirQuality:
             assert result.hourly.us_aqi == [60, 65]
             assert result.hourly.pm10 == [14.2, 15.5]
             assert result.hourly.pm2_5 == [7.8, 8.2]
-            
+
             # Check pollutants
             assert result.hourly.carbon_monoxide == [250.5, 255.3]
             assert result.hourly.nitrogen_dioxide == [12.3, 13.1]
             assert result.hourly.sulphur_dioxide == [2.1, 2.3]
             assert result.hourly.ozone == [45.2, 46.8]
-            
+
             # Check pollen data
             assert result.hourly.grass_pollen == [12.5, 15.3]
             assert result.hourly.birch_pollen == [0.0, 0.0]
-    
+
     async def test_get_air_quality_without_pollen(self, httpx_mock: HTTPXMock):
         """Test air quality API call without pollen data."""
         httpx_mock.add_response(
@@ -107,7 +108,7 @@ class TestAirQuality:
                     "us_aqi": 65,
                     "pm10": 15.5,
                     "pm2_5": 8.2,
-                    "uv_index": 3.5
+                    "uv_index": 3.5,
                 },
                 "hourly": {
                     "time": ["2026-01-10T00:00"],
@@ -122,23 +123,21 @@ class TestAirQuality:
                     "dust": [5.2],
                     "uv_index": [0.0],
                     "uv_index_clear_sky": [0.0],
-                    "ammonia": [1.2]
-                }
+                    "ammonia": [1.2],
+                },
             }
         )
-        
+
         async with OpenMeteoClient() as client:
             result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417,
-                include_pollen=False
+                latitude=47.3769, longitude=8.5417, include_pollen=False
             )
-            
+
             assert isinstance(result, AirQualityForecast)
             assert result.current is not None
             assert result.hourly is not None
             # Pollen fields should be None or not present
-    
+
     async def test_get_air_quality_forecast_days_clamping(self, httpx_mock: HTTPXMock):
         """Test that forecast_days is clamped to 1-5 range."""
         response_data = {
@@ -151,7 +150,7 @@ class TestAirQuality:
                 "us_aqi": 65,
                 "pm10": 15.5,
                 "pm2_5": 8.2,
-                "uv_index": 3.5
+                "uv_index": 3.5,
             },
             "hourly": {
                 "time": ["2026-01-10T00:00"],
@@ -166,30 +165,26 @@ class TestAirQuality:
                 "dust": [5.2],
                 "uv_index": [0.0],
                 "uv_index_clear_sky": [0.0],
-                "ammonia": [1.2]
-            }
+                "ammonia": [1.2],
+            },
         }
-        
+
         httpx_mock.add_response(json=response_data)
         httpx_mock.add_response(json=response_data)
-        
+
         async with OpenMeteoClient() as client:
             # Test clamping to minimum (1)
             result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417,
-                forecast_days=0
+                latitude=47.3769, longitude=8.5417, forecast_days=0
             )
             assert isinstance(result, AirQualityForecast)
-            
+
             # Test clamping to maximum (5)
             result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417,
-                forecast_days=10
+                latitude=47.3769, longitude=8.5417, forecast_days=10
             )
             assert isinstance(result, AirQualityForecast)
-    
+
     async def test_get_air_quality_high_pollution(self, httpx_mock: HTTPXMock):
         """Test air quality with high pollution levels."""
         httpx_mock.add_response(
@@ -203,7 +198,7 @@ class TestAirQuality:
                     "us_aqi": 175,  # Unhealthy
                     "pm10": 85.5,
                     "pm2_5": 55.2,
-                    "uv_index": 8.5  # Very High
+                    "uv_index": 8.5,  # Very High
                 },
                 "hourly": {
                     "time": ["2026-01-10T00:00"],
@@ -218,22 +213,19 @@ class TestAirQuality:
                     "dust": [25.2],
                     "uv_index": [8.5],
                     "uv_index_clear_sky": [9.2],
-                    "ammonia": [15.2]
-                }
+                    "ammonia": [15.2],
+                },
             }
         )
-        
+
         async with OpenMeteoClient() as client:
-            result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417
-            )
-            
+            result = await client.get_air_quality(latitude=47.3769, longitude=8.5417)
+
             assert result.current.european_aqi == 85  # Very Poor
             assert result.current.us_aqi == 175  # Unhealthy
             assert result.current.pm2_5 > 50  # High PM2.5
             assert result.current.uv_index > 8  # Very High UV
-    
+
     async def test_get_air_quality_pollen_season(self, httpx_mock: HTTPXMock):
         """Test air quality during pollen season."""
         httpx_mock.add_response(
@@ -247,7 +239,7 @@ class TestAirQuality:
                     "us_aqi": 50,
                     "pm10": 12.5,
                     "pm2_5": 6.2,
-                    "uv_index": 6.5
+                    "uv_index": 6.5,
                 },
                 "hourly": {
                     "time": ["2026-05-15T12:00"],
@@ -268,60 +260,49 @@ class TestAirQuality:
                     "grass_pollen": [85.3],  # High grass pollen
                     "mugwort_pollen": [2.0],
                     "olive_pollen": [15.5],
-                    "ragweed_pollen": [0.0]
-                }
+                    "ragweed_pollen": [0.0],
+                },
             }
         )
-        
+
         async with OpenMeteoClient() as client:
             result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417,
-                include_pollen=True
+                latitude=47.3769, longitude=8.5417, include_pollen=True
             )
-            
+
             assert result.hourly.birch_pollen[0] > 100  # High birch pollen
             assert result.hourly.grass_pollen[0] > 50  # High grass pollen
-    
+
     async def test_get_air_quality_http_error(self, httpx_mock: HTTPXMock):
         """Test handling of HTTP errors."""
         httpx_mock.add_response(status_code=503)
-        
+
         async with OpenMeteoClient() as client:
             with pytest.raises(Exception):  # httpx.HTTPStatusError
                 await client.get_air_quality(latitude=47.3769, longitude=8.5417)
-    
+
     async def test_get_air_quality_invalid_response(self, httpx_mock: HTTPXMock):
         """Test handling of invalid JSON response."""
-        httpx_mock.add_response(
-            json={"invalid": "air_quality_data"}
-        )
-        
+        httpx_mock.add_response(json={"invalid": "air_quality_data"})
+
         async with OpenMeteoClient() as client:
             with pytest.raises(ValueError):
                 await client.get_air_quality(latitude=47.3769, longitude=8.5417)
-    
+
     async def test_get_air_quality_minimal_data(self, httpx_mock: HTTPXMock):
         """Test air quality with minimal data (only required fields)."""
         httpx_mock.add_response(
-            json={
-                "latitude": 47.3769,
-                "longitude": 8.5417,
-                "timezone": "Europe/Zurich"
-            }
+            json={"latitude": 47.3769, "longitude": 8.5417, "timezone": "Europe/Zurich"}
         )
-        
+
         async with OpenMeteoClient() as client:
-            result = await client.get_air_quality(
-                latitude=47.3769,
-                longitude=8.5417
-            )
-            
+            result = await client.get_air_quality(latitude=47.3769, longitude=8.5417)
+
             assert isinstance(result, AirQualityForecast)
             assert result.latitude == 47.3769
             assert result.longitude == 8.5417
             # current and hourly may be None
-    
+
     async def test_get_air_quality_uv_index_levels(self, httpx_mock: HTTPXMock):
         """Test different UV index levels."""
         uv_levels = [
@@ -329,9 +310,9 @@ class TestAirQuality:
             (4.0, "Moderate"),
             (6.5, "High"),
             (9.0, "Very High"),
-            (11.5, "Extreme")
+            (11.5, "Extreme"),
         ]
-        
+
         for uv_value, level in uv_levels:
             httpx_mock.add_response(
                 json={
@@ -344,7 +325,7 @@ class TestAirQuality:
                         "us_aqi": 50,
                         "pm10": 10.0,
                         "pm2_5": 5.0,
-                        "uv_index": uv_value
+                        "uv_index": uv_value,
                     },
                     "hourly": {
                         "time": ["2026-01-10T12:00"],
@@ -359,15 +340,14 @@ class TestAirQuality:
                         "dust": [5.0],
                         "uv_index": [uv_value],
                         "uv_index_clear_sky": [uv_value + 1.0],
-                        "ammonia": [1.0]
-                    }
+                        "ammonia": [1.0],
+                    },
                 }
             )
-        
+
         async with OpenMeteoClient() as client:
             for uv_value, level in uv_levels:
                 result = await client.get_air_quality(
-                    latitude=47.3769,
-                    longitude=8.5417
+                    latitude=47.3769, longitude=8.5417
                 )
                 assert result.current.uv_index == uv_value

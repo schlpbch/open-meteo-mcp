@@ -11,20 +11,20 @@
 - **Scope**: Weather, snow, air quality, location services
 - **Additional Features**: REST API, chat handler with Claude integration
 
-### Relationship to open-meteo-mcp
+### Relationship to Reference Implementation
 
 This is **the primary/extended Python implementation** of the Open Meteo MCP server:
 
-| Aspect | open-meteo-mcp (Rust reference) | open-meteo-mcp-py (Python extended) |
+| Aspect | Reference (TypeScript) | Python Extended |
 |--------|---------|---------|
 | **Language** | TypeScript/Node.js | Python 3.11+ |
-| **Tools** | 11 (core weather tools) | 11 (same core) |
-| **Resources** | 4 (reference data) | 4 (same) |
-| **REST API** | ✗ | ✓ |
+| **Core Tools** | 11 | 11 (identical) |
+| **Reference Resources** | 4 | 4 (identical) |
+| **REST API** | ✗ | ✓ (NEW) |
 | **Chat Interface** | ✗ | ✓ Claude integration |
-| **Service Layer** | ✓ | ✓ |
-| **Async** | ✓ | ✓ |
-| **Testing** | 248 tests | 177 tests |
+| **Service Layer** | ✓ | ✓ Enriched |
+| **Async Support** | ✓ | ✓ |
+| **Type Safety** | ✓ strict | ✓ strict |
 
 **Key Difference**: This version adds optional REST API endpoints and a chat handler for Claude AI integration, making it suitable for both MCP and web/chat applications.
 
@@ -39,20 +39,20 @@ This is **the primary/extended Python implementation** of the Open Meteo MCP ser
 - **Pre-commit**: Mypy checks run but are non-blocking
 
 #### Code Formatting
-- **Status**: Currently using default formatting (post-MVP)
-- **Tool**: Ruff (configured but not yet enabled - see `[tool.ruff]` commented section)
+- **Status**: Post-MVP phase (ruff configuration pending)
+- **Tool**: Ruff (listed in dependencies, configuration commented)
 - **Future**: Will enforce 88 char line-length with ruff formatter
-- **Note**: The codebase follows Python conventions; ruff enforcement is pending post-MVP phase
+- **Current**: Codebase follows Python conventions; ruff enforcement is pending
 
 #### Linting
-- **Tool**: Ruff (listed in dependencies but configuration pending)
+- **Tool**: Ruff (listed in dependencies but not yet enforced)
 - **Command**: `uv run ruff check src/ tests/` (when enabled)
-- **Status**: Post-MVP configuration required
+- **Status**: Configuration pending post-MVP
 
 ### Pre-commit Hooks (Recommended)
 
 ```bash
-# Future pre-commit setup (currently not enforced)
+# Recommended pre-commit setup (not yet enforced)
 .git/hooks/pre-commit
 ├── Ruff linting check (pending)
 ├── Ruff formatting check (pending)
@@ -96,7 +96,7 @@ tests/
 ├── test_client.py              # OpenMeteoClient HTTP client
 ├── test_models.py              # Pydantic model validation
 ├── test_helpers.py             # Utility function tests
-├── test_services.py            # Service layer tests (weather, air quality, location)
+├── test_services.py            # Service layer tests
 ├── test_geocoding.py           # Location search functionality
 ├── test_air_quality.py         # Air quality data enrichment
 ├── test_meteo_improvements.py  # Weather feature tests
@@ -121,17 +121,17 @@ FastMCP initialization
 **Service Layer** (business logic with enrichment patterns)
 ```
 services/
-├── weather_service.py        # Weather forecast enrichment
-├── air_quality_service.py    # Air quality data enrichment
-├── location_service.py       # Location/geocoding enrichment
-└── base.py                   # Common enrichment patterns (BaseService)
+├── base.py                     # BaseService with common patterns
+├── weather_service.py          # Weather forecast enrichment
+├── air_quality_service.py      # Air quality data enrichment
+└── location_service.py         # Location/geocoding enrichment
 ```
 
 **HTTP Client** (`client.py`)
 ```
 OpenMeteoClient
 ├── Async HTTP client (httpx)
-├── Error handling decorator
+├── Error handling decorator pattern
 ├── API call orchestration
 └── Response validation (Pydantic)
 ```
@@ -230,7 +230,6 @@ uv run mypy src/ --show-error-codes
 uv run mypy src/open_meteo_mcp/server.py
 
 # Fix errors by adding type annotations
-# Example: Add return type to function
 def get_weather(...) -> dict[str, Any]:
     ...
 ```
@@ -262,7 +261,7 @@ def get_weather(...) -> dict[str, Any]:
 - Test complete tool workflows
 - Test service layer caching
 - Test error handling
-- Real API calls (optional, marked with `@pytest.mark.integration`)
+- Real API calls (optional)
 
 ### API Tests
 - Test REST endpoints
