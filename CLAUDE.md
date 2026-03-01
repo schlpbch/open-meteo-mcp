@@ -39,31 +39,34 @@ This is **the primary/extended Python implementation** of the Open Meteo MCP ser
 - **Pre-commit**: Mypy checks run but are non-blocking
 
 #### Code Formatting
-- **Status**: Post-MVP phase (ruff configuration pending)
-- **Tool**: Ruff (listed in dependencies, configuration commented)
-- **Future**: Will enforce 88 char line-length with ruff formatter
-- **Current**: Codebase follows Python conventions; ruff enforcement is pending
+- **Status**: Active (Phase 1 complete)
+- **Tool**: Ruff with 88 char line-length
+- **Command**: `uv run ruff format src/`
+- **Pre-commit**: Blocking check enforces formatting
 
 #### Linting
-- **Tool**: Ruff (listed in dependencies but not yet enforced)
-- **Command**: `uv run ruff check src/ tests/` (when enabled)
-- **Status**: Configuration pending post-MVP
+- **Tool**: Ruff (v0.15+)
+- **Command**: `uv run ruff check src/`
+- **Status**: Active - blocking pre-commit checks
 
-### Pre-commit Hooks (Recommended)
+### Pre-commit Hooks
 
 ```bash
-# Recommended pre-commit setup (not yet enforced)
+# Install hooks
+pre-commit install
+
+# Hooks enforce
 .git/hooks/pre-commit
-├── Ruff linting check (pending)
-├── Ruff formatting check (pending)
+├── Ruff formatting check (blocking)
+├── Ruff linting check (blocking)
 └── Mypy type checking (non-blocking)
 ```
 
 **Setup**:
 ```bash
-# Manual checks available now
-uv run mypy src/
-uv run ruff check src/ tests/
+uv run ruff format src/        # Format code
+uv run ruff check src/         # Lint
+uv run mypy src/               # Type check
 ```
 
 ## Testing
@@ -274,6 +277,27 @@ def get_weather(...) -> dict[str, Any]:
 - Test tool execution within chat context
 - Test session management
 - Test message formatting
+
+## Error Handling (Phase 8 - Standardized Patterns)
+
+All tools use consistent error handling with the `@error_handler` decorator:
+
+```python
+@mcp.tool()
+@error_handler
+def get_weather(latitude: float, longitude: float) -> str:
+    """Tool implementation - errors are caught and formatted automatically."""
+    return json.dumps(weather_data)
+```
+
+**Key features:**
+- Automatic try/except wrapping for all tools
+- Structured error responses with `{"error": "message"}` format
+- Support for specific exceptions (ValueError, TypeError, HTTPError, etc.)
+- Automatic JSON serialization
+- Request-scoped logging with context preservation
+
+See `src/open_meteo_mcp/decorators.py` for implementation details.
 
 ## Troubleshooting
 
