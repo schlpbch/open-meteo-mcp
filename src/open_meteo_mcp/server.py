@@ -29,8 +29,8 @@ location_service = LocationService(client)
 # ============================================================================
 
 
-@mcp.tool(name="meteo__get_weather")
-@tool_error_handler("meteo__get_weather")
+@mcp.tool(name="get_weather")
+@tool_error_handler("get_weather")
 async def get_weather(
     latitude: float,
     longitude: float,
@@ -91,8 +91,8 @@ async def get_weather(
     )
 
 
-@mcp.tool(name="meteo__get_snow_conditions")
-@tool_error_handler("meteo__get_snow_conditions")
+@mcp.tool(name="get_snow_conditions")
+@tool_error_handler("get_snow_conditions")
 async def get_snow_conditions(
     latitude: float,
     longitude: float,
@@ -147,8 +147,8 @@ async def get_snow_conditions(
     )
 
 
-@mcp.tool(name="meteo__search_location")
-@tool_error_handler("meteo__search_location")
+@mcp.tool(name="search_location")
+@tool_error_handler("search_location")
 async def search_location(
     name: str, count: int = 10, language: str = "en", country: str = ""
 ) -> dict[str, Any]:
@@ -206,8 +206,8 @@ async def search_location(
     )
 
 
-@mcp.tool(name="meteo__get_air_quality")
-@tool_error_handler("meteo__get_air_quality")
+@mcp.tool(name="get_air_quality")
+@tool_error_handler("get_air_quality")
 async def get_air_quality(
     latitude: float,
     longitude: float,
@@ -268,8 +268,8 @@ async def get_air_quality(
     )
 
 
-@mcp.tool(name="meteo__get_weather_alerts")
-@tool_error_handler("meteo__get_weather_alerts")
+@mcp.tool(name="get_weather_alerts")
+@tool_error_handler("get_weather_alerts")
 async def get_weather_alerts(
     latitude: float, longitude: float, forecast_hours: int = 24, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -333,8 +333,8 @@ async def get_weather_alerts(
     }
 
 
-@mcp.tool(name="meteo__get_historical_weather")
-@tool_error_handler("meteo__get_historical_weather")
+@mcp.tool(name="get_historical_weather")
+@tool_error_handler("get_historical_weather")
 async def get_historical_weather(
     latitude: float,
     longitude: float,
@@ -384,8 +384,8 @@ async def get_historical_weather(
     return historical.model_dump()
 
 
-@mcp.tool(name="meteo__get_marine_conditions")
-@tool_error_handler("meteo__get_marine_conditions")
+@mcp.tool(name="get_marine_conditions")
+@tool_error_handler("get_marine_conditions")
 async def get_marine_conditions(
     latitude: float,
     longitude: float,
@@ -439,8 +439,8 @@ async def get_marine_conditions(
     return conditions.model_dump()
 
 
-@mcp.tool(name="meteo__get_comfort_index")
-@tool_error_handler("meteo__get_comfort_index")
+@mcp.tool(name="get_comfort_index")
+@tool_error_handler("get_comfort_index")
 async def get_comfort_index(
     latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -518,8 +518,8 @@ async def get_comfort_index(
     }
 
 
-@mcp.tool(name="meteo__get_astronomy")
-@tool_error_handler("meteo__get_astronomy")
+@mcp.tool(name="get_astronomy")
+@tool_error_handler("get_astronomy")
 async def get_astronomy(
     latitude: float, longitude: float, timezone: str = "auto"
 ) -> dict[str, Any]:
@@ -586,8 +586,8 @@ async def get_astronomy(
     }
 
 
-@mcp.tool(name="meteo__search_location_swiss")
-@tool_error_handler("meteo__search_location_swiss")
+@mcp.tool(name="search_location_swiss")
+@tool_error_handler("search_location_swiss")
 async def search_location_swiss(
     name: str, include_features: bool = False, language: str = "en", count: int = 10
 ) -> dict[str, Any]:
@@ -637,8 +637,8 @@ async def search_location_swiss(
     )
 
 
-@mcp.tool(name="meteo__compare_locations")
-@tool_error_handler("meteo__compare_locations")
+@mcp.tool(name="compare_locations")
+@tool_error_handler("compare_locations")
 async def compare_locations(
     locations: list[dict[str, Any]],
     criteria: str = "best_overall",
@@ -861,7 +861,7 @@ async def swiss_locations() -> str:
 # ============================================================================
 
 
-@mcp.prompt(name="meteo__ski-trip-weather")
+@mcp.prompt(name="ski-trip-weather")
 async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
     """
     Generates a guide for checking snow conditions and weather for ski trips to Swiss resorts.
@@ -921,7 +921,7 @@ async def ski_trip_weather(resort: str = "", dates: str = "") -> str:
     return template
 
 
-@mcp.prompt(name="meteo__plan-outdoor-activity")
+@mcp.prompt(name="plan-outdoor-activity")
 async def plan_outdoor_activity(
     activity: str = "", location: str = "", timeframe: str = ""
 ) -> str:
@@ -987,7 +987,7 @@ Weather sensitivity levels:
     return template
 
 
-@mcp.prompt(name="meteo__weather-aware-travel")
+@mcp.prompt(name="weather-aware-travel")
 async def weather_aware_travel(
     destination: str = "", travel_dates: str = "", trip_type: str = ""
 ) -> str:

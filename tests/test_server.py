@@ -17,63 +17,63 @@ class TestServerTools:
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_weather" in tool_names
+            assert "get_weather" in tool_names
 
     async def test_get_snow_conditions_tool_registered(self):
         """Test that get_snow_conditions tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_snow_conditions" in tool_names
+            assert "get_snow_conditions" in tool_names
 
     async def test_get_weather_alerts_tool_registered(self):
         """Test that get_weather_alerts tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_weather_alerts" in tool_names
+            assert "get_weather_alerts" in tool_names
 
     async def test_get_historical_weather_tool_registered(self):
         """Test that get_historical_weather tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_historical_weather" in tool_names
+            assert "get_historical_weather" in tool_names
 
     async def test_get_marine_conditions_tool_registered(self):
         """Test that get_marine_conditions tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_marine_conditions" in tool_names
+            assert "get_marine_conditions" in tool_names
 
     async def test_get_comfort_index_tool_registered(self):
         """Test that get_comfort_index tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_comfort_index" in tool_names
+            assert "get_comfort_index" in tool_names
 
     async def test_get_astronomy_tool_registered(self):
         """Test that get_astronomy tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__get_astronomy" in tool_names
+            assert "get_astronomy" in tool_names
 
     async def test_search_location_swiss_tool_registered(self):
         """Test that search_location_swiss tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__search_location_swiss" in tool_names
+            assert "search_location_swiss" in tool_names
 
     async def test_compare_locations_tool_registered(self):
         """Test that compare_locations tool is registered."""
         async with Client(mcp) as client:
             tools = await client.list_tools()
             tool_names = [tool.name for tool in tools]
-            assert "meteo__compare_locations" in tool_names
+            assert "compare_locations" in tool_names
 
     async def test_tool_count(self):
         """Test that 11 tools are registered."""
@@ -136,21 +136,21 @@ class TestServerPrompts:
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "meteo__ski-trip-weather" in prompt_names
+            assert "ski-trip-weather" in prompt_names
 
     async def test_plan_outdoor_activity_prompt_registered(self):
         """Test that outdoor activity prompt is registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "meteo__plan-outdoor-activity" in prompt_names
+            assert "plan-outdoor-activity" in prompt_names
 
     async def test_weather_aware_travel_prompt_registered(self):
         """Test that weather aware travel prompt is registered."""
         async with Client(mcp) as client:
             prompts = await client.list_prompts()
             prompt_names = [prompt.name for prompt in prompts]
-            assert "meteo__weather-aware-travel" in prompt_names
+            assert "weather-aware-travel" in prompt_names
 
     async def test_prompt_count(self):
         """Test that 3 prompts are registered."""
@@ -162,7 +162,7 @@ class TestServerPrompts:
         """Test ski trip weather prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "meteo__ski-trip-weather",
+                "ski-trip-weather",
                 arguments={"resort": "Zermatt", "dates": "this weekend"},
             )
             # Should return a message with content
@@ -179,7 +179,7 @@ class TestServerPrompts:
         """Test outdoor activity prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "meteo__plan-outdoor-activity",
+                "plan-outdoor-activity",
                 arguments={
                     "activity": "hiking",
                     "location": "Bern",
@@ -198,7 +198,7 @@ class TestServerPrompts:
         """Test weather aware travel prompt generates valid template."""
         async with Client(mcp) as client:
             result = await client.get_prompt(
-                "meteo__weather-aware-travel",
+                "weather-aware-travel",
                 arguments={
                     "destination": "Zürich",
                     "travel_dates": "next week",
