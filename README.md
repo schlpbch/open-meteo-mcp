@@ -1,3 +1,7 @@
+> [!WARNING]
+> This repository has been consolidated into the [swiss-mcp mono-repo](https://github.com/schlpbch/swiss-mcp).
+> New development happens in `packages/open-meteo-mcp/`. This repo is kept for historical reference only.
+
 # Open Meteo MCP Server
 
 A Model Context Protocol (MCP) server providing weather and snow condition tools via the [Open-Meteo API](https://open-meteo.com/).
