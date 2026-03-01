@@ -16,11 +16,12 @@ A Model Context Protocol (MCP) server providing weather and snow condition tools
 - **Free API**: No API key required - powered by Open-Meteo's free weather API
 - **MCP Integration**: Seamlessly integrates with MCP-compatible clients like Claude Desktop
 
-### Quality & Reliability (Phase 7)
+### Quality & Reliability (Phase 8 Complete)
 - **Type Safety**: 0 mypy errors, full type annotations across codebase
-- **Code Quality**: 100% black formatting compliant, 100% ruff linting compliant
+- **Code Quality**: 100% ruff formatting and linting compliant
+- **Error Handling**: Standardized error handling decorators across all tools (Phase 8)
 - **Automated Checks**: Pre-commit hooks enforce quality on every commit
-- **Test Coverage**: 248 tests passing, 90% code coverage
+- **Test Coverage**: 248+ tests passing, 90%+ code coverage
 - **Production Ready**: Fully tested, documented, and ready for deployment
 
 ## Tools
