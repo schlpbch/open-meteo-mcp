@@ -1,3 +1,3 @@
 """Open Meteo MCP Server - Weather and snow conditions via Open-Meteo API."""
 
-__version__ = "3.3.1"
+__version__ = "3.3.2"
